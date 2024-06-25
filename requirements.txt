@@ -1,0 +1,16 @@
+aniso8601
+Click
+fastapi
+python-multipart
+gunicorn
+uvicorn
+itsdangerous
+Jinja2
+MarkupSafe
+pytz
+Werkzeug
+databases
+boto3
+sqlalchemy==1.3.23
+asyncpg
+psycopg2-binary
