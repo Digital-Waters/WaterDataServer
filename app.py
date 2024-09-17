@@ -24,6 +24,7 @@ class Item(Base):
     device_datetime  = Column(DateTime, index=True)
     imageURI  = Column(String)
     weather   = Column(String) 
+    waterColor = Column(String)
 
 # Define your pydantic model for request body
 class ImageItem(BaseModel):
@@ -32,6 +33,7 @@ class ImageItem(BaseModel):
     longitude: str
     device_datetime:  str
     weather:   str
+    waterColor: str
 
 
 # Connect to AWS S3
@@ -47,6 +49,7 @@ async def upload_image(deviceID: str = Form(...),
                       longitude: str = Form(...), 
                       device_datetime: str = Form(...), 
                       weather: str = Form(...), 
+                      waterColor: str = Form(...),
                       image: UploadFile = File(...)):
     try:
         
