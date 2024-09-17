@@ -81,6 +81,7 @@ async def upload_image(deviceID: str = Form(...),
                          longitude=longitude, 
                          device_datetime=device_datetime, 
                          imageURI=url,
+                         waterColor=waterColor,
                          weather=weather)
         db.add(new_image)
         db.commit()
