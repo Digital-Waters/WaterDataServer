@@ -92,3 +92,46 @@ async def upload_image(deviceID: str = Form(...),
     except Exception as e:
         return JSONResponse(content={"message": "Failed to upload file", "error": str(e)}, status_code=500)
 
+
+
+@app.get('/getwaterdata/')
+def get_data(
+    begin_longitude: Optional[float] = None,
+    begin_latitude: Optional[float] = None,
+    end_longitude: Optional[float] = None,
+    end_latitude: Optional[float] = None,
+    begin_datetime: Optional[datetime] = None,
+    end_datetime: Optional[datetime] = None,
+    DeviceIDs: Optional[List[str]] = Query(None)):
+
+    try:
+        # Start building the query
+        query = db.query("images")
+
+        # Apply filters based on optional parameters
+        filters = []
+        if begin_longitude is not None:
+            filters.append(YourTableName.longitude >= begin_longitude)
+        if end_longitude is not None:
+            filters.append(YourTableName.longitude <= end_longitude)
+        if begin_latitude is not None:
+            filters.append(YourTableName.latitude >= begin_latitude)
+        if end_latitude is not None:
+            filters.append(YourTableName.latitude <= end_latitude)
+        if begin_datetime is not None:
+            filters.append(YourTableName.device_time >= begin_datetime)
+        if end_datetime is not None:
+            filters.append(YourTableName.device_time <= end_datetime)
+        if DeviceIDs:
+            filters.append(YourTableName.device_id.in_(DeviceIDs))
+        
+        # Apply filters to the query
+        if filters:
+            query = query.filter(and_(*filters))
+        
+        # Execute the query and fetch results
+        results = query.all()
+        return results
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
