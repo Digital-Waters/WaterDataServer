@@ -93,7 +93,6 @@ async def upload_image(deviceID: str = Form(...),
         return JSONResponse(content={"message": "Failed to upload file", "error": str(e)}, status_code=500)
 
 
-"""
 @app.get('/getwaterdata/')
 async def get_data(
     begin_longitude: Optional[float] = None,
@@ -135,4 +134,3 @@ async def get_data(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-"""
