@@ -5,6 +5,7 @@ This code isn't much more than simple data collection and storage. All image dat
 
 # Using Our API
 There are currently two publicly available APIs:
+
 **https://water-watch-58265eebffd9.herokuapp.com/upload/**
 This is the API all our devices will use to submit collected data. It is a POST call and expects the following parameters: 
 * deviceID
