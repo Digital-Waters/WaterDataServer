@@ -146,7 +146,9 @@ async def get_data(
         if end_datetime is not None:
             filters.append(Item.device_datetime <= end_datetime)
         if DeviceIDs:
-            filters.append(Item.deviceID.in_(DeviceIDs))
+            valid_ids = [device_id for device_id in DeviceIDs if device_id]
+            if valid_ids:
+                filters.append(Item.deviceID.in_(valid_ids))
 
         # Apply filters and fetch results
         if filters:
