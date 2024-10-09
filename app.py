@@ -1,7 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
@@ -11,9 +10,9 @@ import os
 
 app = FastAPI()
 
-engine = create_async_engine(os.getenv("DATABASE_URL"), echo=True)
-#SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_engine(os.getenv("DATABASE_URL"), echo=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+#SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 Base = declarative_base()
 
 # Define your database model
