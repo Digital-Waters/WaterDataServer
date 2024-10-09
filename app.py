@@ -10,9 +10,8 @@ import os
 
 app = FastAPI()
 
-engine = create_engine(os.getenv("DATABASE_URL"), echo=True)
+engine = create_engine(os.getenv("DATABASE_URL"))
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-#SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 Base = declarative_base()
 
 # Define your database model
@@ -94,7 +93,7 @@ async def upload_image(deviceID: str = Form(...),
         return JSONResponse(content={"message": "Failed to upload file", "error": str(e)}, status_code=500)
 
 
-
+"""
 @app.get('/getwaterdata/')
 async def get_data(
     begin_longitude: Optional[float] = None,
@@ -136,3 +135,4 @@ async def get_data(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+"""
