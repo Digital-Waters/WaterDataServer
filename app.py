@@ -93,6 +93,15 @@ async def upload_image(deviceID: str = Form(...),
         return JSONResponse(content={"message": "Failed to upload file", "error": str(e)}, status_code=500)
 
 
+# Dependency to get a database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# GET method to retrieve data
 @app.get('/getwaterdata/')
 async def get_data(
     begin_longitude: Optional[float] = None,
@@ -101,28 +110,28 @@ async def get_data(
     end_latitude: Optional[float] = None,
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
-    DeviceIDs: Optional[List[str]] = Query(None)):
-
+    DeviceIDs: Optional[List[str]] = Query(None),
+    db: SessionLocal = Depends(get_db)
+):
     try:
-        # Start building the query
-        query = db.query("images")
+        query = db.query(Item)
 
         # Apply filters based on optional parameters
         filters = []
         if begin_longitude is not None:
-            filters.append(YourTableName.longitude >= begin_longitude)
+            filters.append(Item.longitude >= begin_longitude)
         if end_longitude is not None:
-            filters.append(YourTableName.longitude <= end_longitude)
+            filters.append(Item.longitude <= end_longitude)
         if begin_latitude is not None:
-            filters.append(YourTableName.latitude >= begin_latitude)
+            filters.append(Item.latitude >= begin_latitude)
         if end_latitude is not None:
-            filters.append(YourTableName.latitude <= end_latitude)
+            filters.append(Item.latitude <= end_latitude)
         if begin_datetime is not None:
-            filters.append(YourTableName.device_time >= begin_datetime)
+            filters.append(Item.device_datetime >= begin_datetime)
         if end_datetime is not None:
-            filters.append(YourTableName.device_time <= end_datetime)
+            filters.append(Item.device_datetime <= end_datetime)
         if DeviceIDs:
-            filters.append(YourTableName.device_id.in_(DeviceIDs))
+            filters.append(Item.deviceID.in_(DeviceIDs))
         
         # Apply filters to the query
         if filters:
@@ -131,6 +140,6 @@ async def get_data(
         # Execute the query and fetch results
         results = query.all()
         return results
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
