@@ -1,9 +1,10 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Depends
+from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
-from fastapi.responses import JSONResponse
+from typing import List, Optional
 import boto3
 import os
 
@@ -110,10 +111,11 @@ async def get_data(
     end_latitude: Optional[float] = None,
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
-    DeviceIDs: Optional[List[str]] = Query(None),
-    db: SessionLocal = Depends(get_db)
+    DeviceIDs: Optional[List[str]] = Query(None)
 ):
     try:
+        db = SessionLocal()
+        # Start building the query
         query = db.query(Item)
 
         # Apply filters based on optional parameters
@@ -139,7 +141,8 @@ async def get_data(
         
         # Execute the query and fetch results
         results = query.all()
+        db.close()
         return results
-
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
