@@ -109,8 +109,8 @@ async def get_data(
     begin_latitude: Optional[float] = None,
     end_longitude: Optional[float] = None,
     end_latitude: Optional[float] = None,
-    begin_datetime: Optional[datetime] = None,
-    end_datetime: Optional[datetime] = None,
+    begin_datetime: Optional[DateTime] = None,
+    end_datetime: Optional[DateTime] = None,
     DeviceIDs: Optional[List[str]] = Query(None)
 ):
     try:
