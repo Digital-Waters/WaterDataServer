@@ -36,6 +36,19 @@ class ImageItem(BaseModel):
     weather:   str
     waterColor: str
 
+# Pydantic model for response
+class ItemResponse(BaseModel):
+    id: int
+    deviceID: str
+    latitude: str
+    longitude: str
+    device_datetime: datetime
+    imageURI: str
+    weather: str
+    waterColor: str
+
+    class Config:
+        orm_mode = True
 
 # Connect to AWS S3
 s3 = boto3.resource('s3',
@@ -103,22 +116,21 @@ def get_db():
         db.close()
 
 # GET method to retrieve data
-@app.get('/getwaterdata/')
+@app.get('/getwaterdata/', response_model=List[ItemResponse])
 async def get_data(
     begin_longitude: Optional[float] = None,
     begin_latitude: Optional[float] = None,
     end_longitude: Optional[float] = None,
     end_latitude: Optional[float] = None,
-    begin_datetime: Optional[DateTime] = None,
-    end_datetime: Optional[DateTime] = None,
+    begin_datetime: Optional[datetime] = None,
+    end_datetime: Optional[datetime] = None,
     DeviceIDs: Optional[List[str]] = Query(None)
 ):
     try:
         db = SessionLocal()
-        # Start building the query
         query = db.query(Item)
 
-        # Apply filters based on optional parameters
+        # Build filters
         filters = []
         if begin_longitude is not None:
             filters.append(Item.longitude >= begin_longitude)
@@ -134,15 +146,14 @@ async def get_data(
             filters.append(Item.device_datetime <= end_datetime)
         if DeviceIDs:
             filters.append(Item.deviceID.in_(DeviceIDs))
-        
-        # Apply filters to the query
+
+        # Apply filters and fetch results
         if filters:
             query = query.filter(and_(*filters))
         
-        # Execute the query and fetch results
         results = query.all()
         db.close()
         return results
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
