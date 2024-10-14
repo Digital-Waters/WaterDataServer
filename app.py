@@ -27,6 +27,7 @@ class Item(Base):
     imageURI  = Column(String)
     temperature = Column(String) 
     waterColor = Column(String)
+    weather = Column(String) 
 
 # Define your pydantic model for request body
 class ImageItem(BaseModel):
@@ -36,6 +37,7 @@ class ImageItem(BaseModel):
     device_datetime:  str
     temperature: str
     waterColor: str
+    weather: str
 
 # Pydantic model for response
 class ItemResponse(BaseModel):
@@ -47,6 +49,7 @@ class ItemResponse(BaseModel):
     imageURI: str
     temperature: str
     waterColor: str
+    weather: str
 
     class Config:
         orm_mode = True
@@ -65,6 +68,7 @@ async def upload_image(deviceID: str = Form(...),
                       device_datetime: str = Form(...), 
                       temperature: str = Form(...), 
                       waterColor: str = Form(...),
+                      weather: str = "n/a",
                       image: UploadFile = File(...)):
     try:
         
@@ -97,7 +101,8 @@ async def upload_image(deviceID: str = Form(...),
                          device_datetime=device_datetime, 
                          imageURI=url,
                          waterColor=waterColor,
-                         temperature=weather)
+                         temperature=temperature,
+                         weather="n/a")
         db.add(new_image)
         db.commit()
         db.close()
