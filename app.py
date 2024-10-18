@@ -163,8 +163,7 @@ async def get_data(
         if filters:
             query = query.filter(and_(*filters))
         
-        # Order by gmt_datetime descending
-        query = query.order_by(desc(Item.gmt_datetime))
+        query = query.order_by(desc(Item.deviceID), desc(Item.gmt_datetime))
 
         if limit > 1000: 
             limit = 1000
