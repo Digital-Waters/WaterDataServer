@@ -24,11 +24,11 @@ class Item(Base):
     latitude  = Column(String, index=True)
     longitude = Column(String, index=True)
     device_datetime  = Column(DateTime, index=True)
-    gmt_datetime = Column(DateTime, index=True)
+    gmt_datetime = Column(DateTime, index=True, nullable=True)
     imageURI  = Column(String)
     temperature = Column(String) 
     waterColor = Column(String)
-    weather = Column(String) 
+    weather = Column(String, nullable=True) 
 
 # Define your pydantic model for request body
 class ImageItem(BaseModel):
@@ -168,7 +168,7 @@ async def get_data(
 
         if limit > 1000: 
             limit = 1000
-            
+
         # Apply limit and offset for paging
         query = query.offset(offset).limit(limit)
 
