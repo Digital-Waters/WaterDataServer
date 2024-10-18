@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_, desc, asc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
@@ -24,6 +24,7 @@ class Item(Base):
     latitude  = Column(String, index=True)
     longitude = Column(String, index=True)
     device_datetime  = Column(DateTime, index=True)
+    gmt_datetime = Column(DateTime, index=True)
     imageURI  = Column(String)
     temperature = Column(String) 
     waterColor = Column(String)
@@ -46,6 +47,7 @@ class ItemResponse(BaseModel):
     latitude: str
     longitude: str
     device_datetime: datetime
+    gmt_datetime: datetime
     imageURI: str
     temperature: str
     waterColor: str
@@ -130,7 +132,9 @@ async def get_data(
     end_latitude: Optional[float] = None,
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
-    DeviceIDs: Optional[List[str]] = Query(None)
+    DeviceIDs: Optional[List[str]] = Query(None),
+    limit: int = 1000,
+    offset: int = 0
 ):
     try:
         db = SessionLocal()
@@ -159,6 +163,15 @@ async def get_data(
         if filters:
             query = query.filter(and_(*filters))
         
+        # Order by gmt_datetime descending
+        query = query.order_by(desc(Item.gmt_datetime))
+
+        if limit > 1000: 
+            limit = 1000
+            
+        # Apply limit and offset for paging
+        query = query.offset(offset).limit(limit)
+
         results = query.all()
         db.close()
         return results
