@@ -199,7 +199,7 @@ def deleteS3Object(s3_url):
 
         print(f"Deleted S3 object: {object_key}")
         return True
-        
+
     except Exception as e:
         print(f"Error deleting S3 object: {e}")
         return False
@@ -212,7 +212,7 @@ def deleteRowsAndS3Data():
 
         # Build filters
         filters = []
-        filters.append(Item.id == 3820)
+        filters.append(Item.id == 3819)
         query = query.filter(and_(*filters))
         results = query.all()
 
