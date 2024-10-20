@@ -1,11 +1,13 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_, desc, asc
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_, desc, asc, select, delete
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from urllib.parse import urlparse
+from dotenv import load_dotenv
 import boto3
 import os
 
@@ -15,6 +17,7 @@ app = FastAPI()
 engine = create_engine(os.getenv("DATABASE_URL"))
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+bucketName = "waterwatch"
 
 # Define your database model
 class Item(Base):
@@ -77,13 +80,12 @@ async def upload_image(deviceID: str = Form(...),
         # create unique S3 file name
         nameElements = [deviceID, device_datetime,'.jpeg']
         s3filename = '_'.join(nameElements)
-        bucket_name = "waterwatch"
-        url = f'https://'+bucket_name+'.s3.amazonaws.com/'+s3filename
+        url = f'https://'+bucketName+'.s3.amazonaws.com/'+s3filename
 
         # Upload image to S3
         s3.meta.client.upload_fileobj(
             Fileobj = image.file,
-            Bucket = bucket_name,
+            Bucket = bucketName,
             Key = s3filename,
             ExtraArgs = {"ContentType":"image/jpeg"},
             Callback = None,
@@ -178,3 +180,55 @@ async def get_data(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# GET method to retrieve data
+@app.get('/deleteData/', response_model=List[ItemResponse])
+async def deleteData():
+    deleteRowsAndS3Data()
+
+def deleteS3Object(s3_url):
+    """Delete the corresponding object from S3 based on its URL."""
+    parsed_url = urlparse(s3_url)
+    object_key = parsed_url.path.lstrip('/')
+    
+    try:
+        s3.delete_object(Bucket=bucketName, Key=object_key)
+        print(f"Deleted S3 object: {object_key}")
+    except Exception as e:
+        print(f"Error deleting S3 object: {e}")
+
+def deleteRowsAndS3Data():
+    """Delete rows from the Postgres database and their corresponding S3 objects."""
+    try:
+        db = SessionLocal()
+        query = db.query(Item)
+
+        # Build filters
+        filters = []
+        filters.append(Item.id == 3167)
+        query = query.filter(and_(*filters))
+        results = query.all()
+
+        if not results:
+            print("No rows found to delete.")
+            return
+
+        # Validate, delete S3 objects, and remove rows
+        for row in results:
+            
+            # Delete from S3
+            deleteS3Object(row.imageURI)
+
+            # Delete row from database
+            session.delete(row)
+            print(f"Deleted row with id: {row.id}")
+
+        # Commit the transaction
+        session.commit()
+        print("All rows and corresponding S3 objects deleted.")
+    
+        db.close()
+
+    except Exception as e:
+        print(f"Error deleting rows or S3 data: {e}")
+        session.rollback()
