@@ -215,7 +215,7 @@ def deleteRowsAndS3Data(IDtoDelete):
         #filters.append(Item.id == IDtoDelete)
         filters.append(Item.latitude == "999")
         query = query.filter(and_(*filters))
-        query.limit(60)
+        query.limit(40)
         results = query.all()
 
         if not results:
