@@ -215,7 +215,6 @@ def deleteRowsAndS3Data(IDtoDelete):
         #filters.append(Item.id == IDtoDelete)
         filters.append(Item.latitude == "999")
         query = query.filter(and_(*filters))
-        query.limit(40)
         results = query.all()
 
         if not results:
@@ -237,7 +236,7 @@ def deleteRowsAndS3Data(IDtoDelete):
             print(f"Deleted row with id: {row.id}")
             print(f"Count: {cnt}")
             cnt = cnt + 1
-            if cnt > 40:
+            if cnt > 60:
                 break
 
         # Commit the transaction
