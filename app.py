@@ -206,12 +206,13 @@ def deleteRowsAndS3Data():
 
         # Build filters
         filters = []
-        filters.append(Item.id == 3821)
+        filters.append(Item.id == 3820)
         query = query.filter(and_(*filters))
         results = query.all()
 
         if not results:
             print("No rows found to delete.")
+            db.close()
             return
 
         # Validate, delete S3 objects, and remove rows
@@ -234,4 +235,4 @@ def deleteRowsAndS3Data():
 
     except Exception as e:
         print(f"Error deleting rows or S3 data: {e}")
-        session.rollback()
+        db.rollback()
