@@ -23,7 +23,7 @@ class Item(Base):
     deviceID  = Column(String, index=True)
     latitude  = Column(String, index=True)
     longitude = Column(String, index=True)
-    device_datetime  = Column(DateTime, index=True)
+    device_datetime = Column(DateTime, index=True)
     gmt_datetime = Column(DateTime, index=True, nullable=True)
     imageURI  = Column(String)
     temperature = Column(String) 
@@ -101,6 +101,7 @@ async def upload_image(deviceID: str = Form(...),
                          latitude=latitude, 
                          longitude=longitude, 
                          device_datetime=device_datetime, 
+                         gmt_datetime=datetime.now(),
                          imageURI=url,
                          waterColor=waterColor,
                          temperature=temperature,
