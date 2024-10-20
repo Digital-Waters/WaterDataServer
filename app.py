@@ -204,7 +204,7 @@ def deleteRowsAndS3Data():
 
         # Build filters
         filters = []
-        filters.append(Item.id == 3167)
+        filters.append(Item.id == 3821)
         query = query.filter(and_(*filters))
         results = query.all()
 
