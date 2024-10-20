@@ -191,9 +191,15 @@ def deleteS3Object(s3_url):
     object_key = parsed_url.path.lstrip('/')
     
     try:
-        s3.delete_object(Bucket=bucketName, Key=object_key)
+        s3c = boto3.client('s3',
+            aws_access_key_id=os.getenv("AWS_ACCESS_ID"),
+            aws_secret_access_key=os.getenv("AWS_ACCESS_KEY"))
+        
+        s3c.delete_object(Bucket=bucketName, Key=object_key)
+
         print(f"Deleted S3 object: {object_key}")
         return True
+        
     except Exception as e:
         print(f"Error deleting S3 object: {e}")
         return False
@@ -221,7 +227,7 @@ def deleteRowsAndS3Data():
             # Delete from S3
             if deleteS3Object(row.imageURI) == False:
                 print("Unable to delete S3 object. Aborting.")
-                break
+                return
 
             # Delete row from database
             db.delete(row)
