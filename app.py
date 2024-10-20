@@ -220,11 +220,11 @@ def deleteRowsAndS3Data():
             deleteS3Object(row.imageURI)
 
             # Delete row from database
-            session.delete(row)
+            db.delete(row)
             print(f"Deleted row with id: {row.id}")
 
         # Commit the transaction
-        session.commit()
+        db.commit()
         print("All rows and corresponding S3 objects deleted.")
     
         db.close()
