@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from urllib.parse import urlparse
-from dotenv import load_dotenv
 import boto3
 import os
 
