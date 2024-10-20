@@ -182,8 +182,8 @@ async def get_data(
 
 # GET method to retrieve data
 @app.get('/deleteData/', response_model=List[ItemResponse])
-async def deleteData():
-    deleteRowsAndS3Data()
+async def deleteData(IDtoDelete: int = 0):
+    return deleteRowsAndS3Data(IDtoDelete)
 
 def deleteS3Object(s3_url):
     """Delete the corresponding object from S3 based on its URL."""
@@ -204,7 +204,7 @@ def deleteS3Object(s3_url):
         print(f"Error deleting S3 object: {e}")
         return False
 
-def deleteRowsAndS3Data():
+def deleteRowsAndS3Data(IDtoDelete):
     """Delete rows from the Postgres database and their corresponding S3 objects."""
     try:
         db = SessionLocal()
@@ -212,7 +212,7 @@ def deleteRowsAndS3Data():
 
         # Build filters
         filters = []
-        filters.append(Item.id == 3819)
+        filters.append(Item.id == IDtoDelete)
         query = query.filter(and_(*filters))
         results = query.all()
 
@@ -239,6 +239,8 @@ def deleteRowsAndS3Data():
     
         db.close()
 
+        return JSONResponse(content={"message": "Record deleted successfully"}, status_code=200)
+
     except Exception as e:
-        print(f"Error deleting rows or S3 data: {e}")
-        db.rollback()
+        return JSONResponse(content={"message": "Failed to delete record", "error": str(e)}, status_code=500)
+        
