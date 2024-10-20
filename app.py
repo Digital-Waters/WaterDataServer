@@ -223,6 +223,7 @@ def deleteRowsAndS3Data(IDtoDelete):
             db.close()
             return
 
+        cnt = 0
         # Validate, delete S3 objects, and remove rows
         for row in results:
             
@@ -234,6 +235,10 @@ def deleteRowsAndS3Data(IDtoDelete):
             # Delete row from database
             db.delete(row)
             print(f"Deleted row with id: {row.id}")
+            print(f"Count: {cnt}")
+            cnt = cnt + 1
+            if cnt > 40:
+                break
 
         # Commit the transaction
         db.commit()
