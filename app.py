@@ -193,8 +193,10 @@ def deleteS3Object(s3_url):
     try:
         s3.delete_object(Bucket=bucketName, Key=object_key)
         print(f"Deleted S3 object: {object_key}")
+        return True
     except Exception as e:
         print(f"Error deleting S3 object: {e}")
+        return False
 
 def deleteRowsAndS3Data():
     """Delete rows from the Postgres database and their corresponding S3 objects."""
@@ -216,7 +218,9 @@ def deleteRowsAndS3Data():
         for row in results:
             
             # Delete from S3
-            deleteS3Object(row.imageURI)
+            if deleteS3Object(row.imageURI) == False:
+                print("Unable to delete S3 object. Aborting.")
+                break
 
             # Delete row from database
             db.delete(row)
