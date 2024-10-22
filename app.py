@@ -38,7 +38,8 @@ class ImageItem(BaseModel):
     deviceID:  str
     latitude:  str
     longitude: str
-    device_datetime:  str
+    device_datetime:  datetime
+    gmt_datetime: datetime
     temperature: str
     waterColor: str
     weather: str
@@ -67,7 +68,7 @@ class DeviceRecord(Base):
     latitude  = Column(String, index=True)
     longitude = Column(String, index=True)
     lastOnline = Column(DateTime, index=True)
-    NearbyGeoCoords = Column(String, index=False)#Column(Geography('LINESTRING'), index=False)
+    NearbyGeoCoords = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
     lastCleaned = Column(DateTime, index=True)
 
 class DeviceItem(BaseModel):
@@ -75,18 +76,18 @@ class DeviceItem(BaseModel):
     accountOwner: str
     latitude: str
     longitude: str
-    lastOnline = str
-    NearbyGeoCoords = str
-    lastCleaned = str
+    lastOnline: datetime
+    NearbyGeoCoords: str
+    lastCleaned: datetime
 
 class DeviceResponse(BaseModel):
     deviceID:  str
     accountOwner: str
     latitude: str
     longitude: str
-    lastOnline = datetime
-    NearbyGeoCoords = str
-    lastCleaned = datetime
+    lastOnline: datetime
+    NearbyGeoCoords: str
+    lastCleaned: datetime
 
     class Config:
         orm_mode = True
