@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_, desc, asc, select, delete
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from geoalchemy2 import Geometry
+#from geoalchemy2 import Geometry
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -67,7 +67,7 @@ class DeviceRecord(Base):
     latitude  = Column(String, index=True)
     longitude = Column(String, index=True)
     lastOnline = Column(DateTime, index=True)
-    NearbyGeoCoords = Column(Geography('LINESTRING'), index=False)
+    NearbyGeoCoords = Column(String, index=False)#Column(Geography('LINESTRING'), index=False)
     lastCleaned = Column(DateTime, index=True)
 
 class DeviceItem(BaseModel):
