@@ -19,8 +19,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 bucketName = "waterwatch"
 
+# Open up to all domains
 origins = ["*"]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -182,7 +182,7 @@ async def get_data(
     end_latitude: Optional[float] = None,
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
-    max_temperature: Optional[float] = None,
+    max_temperature: Optional[str] = None,
     DeviceIDs: Optional[List[str]] = Query(None),
     limit: int = 1000,
     offset: int = 0
@@ -206,10 +206,7 @@ async def get_data(
         if end_datetime is not None:
             filters.append(ImageRecord.device_datetime <= end_datetime)
         if max_temperature is not None:
-            #try:
             filters.append(ImageRecord.temperature <= max_temperature)
-            #except:
-            #    pass
 
         if DeviceIDs:
             valid_ids = [device_id for device_id in DeviceIDs if device_id]
