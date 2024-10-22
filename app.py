@@ -12,6 +12,13 @@ import boto3
 import os
 
 
+app = FastAPI()
+engine = create_engine(os.getenv("DATABASE_URL"))
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+bucketName = "waterwatch"
+
+
 # Define your database model
 class ImageRecord(Base):
     __tablename__ = "images"
@@ -85,12 +92,6 @@ class DeviceResponse(BaseModel):
     class Config:
         orm_mode = True
     
-
-app = FastAPI()
-engine = create_engine(os.getenv("DATABASE_URL"))
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-bucketName = "waterwatch"
 
 # Create the tables if they don't exist
 Base.metadata.create_all(engine)
