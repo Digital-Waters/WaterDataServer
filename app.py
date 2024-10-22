@@ -195,7 +195,7 @@ async def get_data(
         if end_datetime is not None:
             filters.append(ImageRecord.device_datetime <= end_datetime)
         if max_temperature is not None:
-            filters.append(str(ImageRecord.temperature) <= str(max_temperature))
+            filters.append(float(str(ImageRecord.temperature)) <= float(str(max_temperature)))
         if DeviceIDs:
             valid_ids = [device_id for device_id in DeviceIDs if device_id]
             if valid_ids:
