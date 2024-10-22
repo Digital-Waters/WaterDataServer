@@ -75,9 +75,9 @@ class DeviceItem(BaseModel):
     accountOwner: str
     latitude: str
     longitude: str
-    lastOnline = datetime
+    lastOnline = str
     NearbyGeoCoords = str
-    lastCleaned = datetime
+    lastCleaned = str
 
 class DeviceResponse(BaseModel):
     deviceID:  str
@@ -328,7 +328,7 @@ async def get_device(
         if filters:
             query = query.filter(and_(*filters))
         
-        query = query.order_by(desc(DeviceRecord.deviceID), desc(DeviceRecord.lastOnline))
+        query = query.order_by(desc(DeviceRecord.deviceID))
 
         if limit > 1000: 
             limit = 1000
