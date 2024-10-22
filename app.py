@@ -12,13 +12,6 @@ import boto3
 import os
 
 
-app = FastAPI()
-
-engine = create_engine(os.getenv("DATABASE_URL"))
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-bucketName = "waterwatch"
-
 # Define your database model
 class ImageRecord(Base):
     __tablename__ = "images"
@@ -68,7 +61,7 @@ class DeviceRecord(Base):
     latitude  = Column(String, index=True)
     longitude = Column(String, index=True)
     lastOnline = Column(DateTime, index=True)
-    NearbyGeoCoords = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
+    nearbyGeoCoords = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
     lastCleaned = Column(DateTime, index=True)
 
 class DeviceItem(BaseModel):
@@ -77,7 +70,7 @@ class DeviceItem(BaseModel):
     latitude: str
     longitude: str
     lastOnline: datetime
-    NearbyGeoCoords: str
+    nearbyGeoCoords: str
     lastCleaned: datetime
 
 class DeviceResponse(BaseModel):
@@ -86,12 +79,23 @@ class DeviceResponse(BaseModel):
     latitude: str
     longitude: str
     lastOnline: datetime
-    NearbyGeoCoords: str
+    nearbyGeoCoords: str
     lastCleaned: datetime
 
     class Config:
         orm_mode = True
     
+
+app = FastAPI()
+engine = create_engine(os.getenv("DATABASE_URL"))
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+bucketName = "waterwatch"
+
+# Create the tables if they don't exist
+Base.metadata.create_all(engine)
+
+
 
 
 # Define route to handle POST requests
