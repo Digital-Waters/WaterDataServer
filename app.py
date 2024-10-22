@@ -40,7 +40,7 @@ class ImageRecord(Base):
     device_datetime = Column(DateTime, index=True)
     gmt_datetime = Column(DateTime, index=True, nullable=True)
     imageURI  = Column(String)
-    temperature = Column(String) 
+    temperature = Column(String, index=True) 
     waterColor = Column(String)
     weather = Column(String, nullable=True) 
 
@@ -104,10 +104,6 @@ class DeviceResponse(BaseModel):
         orm_mode = True
     
 
-# Create the tables if they don't exist
-Base.metadata.create_all(engine)
-
-
 
 
 # Define route to handle POST requests
@@ -133,17 +129,13 @@ async def upload_image(deviceID: str = Form(...),
         s3.meta.client.upload_fileobj(
             Fileobj = image.file,
             Bucket = bucketName,
-            Key = s3filename,
+            Key = image.filename,
             ExtraArgs = {"ContentType":"image/jpeg"},
             Callback = None,
             Config = None)
 
-        try:
-            Base.metadata.create_all(bind=engine)
-        except ProgrammingError as e:
-            print("Table 'images' already exists.")
-
-
+        Base.metadata.create_all(engine)
+        
         # Save image data to Heroku Postgres database with S3 URI
         db = SessionLocal()
         new_image = Item(deviceID=deviceID, 
@@ -182,7 +174,7 @@ async def get_data(
     end_latitude: Optional[float] = None,
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
-    max_temperature: Optional[str] = None,
+    max_temperature: Optional[float] = None,
     DeviceIDs: Optional[List[str]] = Query(None),
     limit: int = 1000,
     offset: int = 0
