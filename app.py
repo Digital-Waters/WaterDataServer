@@ -67,9 +67,9 @@ class DeviceRecord(Base):
     accountOwner = Column(String, index=True)
     latitude  = Column(String, index=True)
     longitude = Column(String, index=True)
-    lastOnline = Column(DateTime, index=True)
+    lastOnline = Column(DateTime, index=True, nullable=True)
     nearbyGeoCoords = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
-    lastCleaned = Column(DateTime, index=True)
+    lastCleaned = Column(DateTime, index=True, nullable=True)
 
 class DeviceItem(BaseModel):
     deviceID: str
