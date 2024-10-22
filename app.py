@@ -138,15 +138,16 @@ async def upload_image(deviceID: str = Form(...),
         
         # Save image data to Heroku Postgres database with S3 URI
         db = SessionLocal()
-        new_image = Item(deviceID=deviceID, 
-                         latitude=latitude, 
-                         longitude=longitude, 
-                         device_datetime=device_datetime, 
-                         gmt_datetime=datetime.now(),
-                         imageURI=url,
-                         waterColor=waterColor,
-                         temperature=temperature,
-                         weather="n/a")
+        new_image = ImageItem(
+            deviceID=deviceID, 
+            latitude=latitude, 
+            longitude=longitude, 
+            device_datetime=device_datetime, 
+            gmt_datetime=datetime.now(),
+            imageURI=url,
+            waterColor=waterColor,
+            temperature=temperature,
+            weather="n/a")
         db.add(new_image)
         db.commit()
         db.close()
