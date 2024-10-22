@@ -138,7 +138,7 @@ async def upload_image(deviceID: str = Form(...),
         
         # Save image data to Heroku Postgres database with S3 URI
         db = SessionLocal()
-        new_image = ImageItem(
+        new_image = ImageRecord(
             deviceID=deviceID, 
             latitude=latitude, 
             longitude=longitude, 
@@ -175,7 +175,7 @@ async def get_data(
     end_latitude: Optional[float] = None,
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
-    max_temperature: Optional[float] = None,
+    max_temperature: Optional[str] = None,
     DeviceIDs: Optional[List[str]] = Query(None),
     limit: int = 1000,
     offset: int = 0
