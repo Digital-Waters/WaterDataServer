@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_, desc, asc, select, delete
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from geoalchemy2 import Geometry
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -19,7 +20,7 @@ Base = declarative_base()
 bucketName = "waterwatch"
 
 # Define your database model
-class Item(Base):
+class ImageRecord(Base):
     __tablename__ = "images"
     id        = Column(Integer, primary_key=True, index=True)
     deviceID  = Column(String, index=True)
@@ -43,7 +44,7 @@ class ImageItem(BaseModel):
     weather: str
 
 # Pydantic model for response
-class ItemResponse(BaseModel):
+class ImageResponse(BaseModel):
     id: int
     deviceID: str
     latitude: str
@@ -58,10 +59,39 @@ class ItemResponse(BaseModel):
     class Config:
         orm_mode = True
 
-# Connect to AWS S3
-s3 = boto3.resource('s3',
-    aws_access_key_id=os.getenv("AWS_ACCESS_ID"),
-    aws_secret_access_key=os.getenv("AWS_ACCESS_KEY"))
+
+class DeviceRecord(Base):
+    __tablename__ = "devices"
+    deviceID  = Column(String, primary_key=True, index=True)
+    accountOwner = Column(String, index=True)
+    latitude  = Column(String, index=True)
+    longitude = Column(String, index=True)
+    lastOnline = Column(DateTime, index=True)
+    NearbyGeoCoords = Column(Geography('LINESTRING'), index=False)
+    lastCleaned = Column(DateTime, index=True)
+
+class DeviceItem(BaseModel):
+    deviceID: str
+    accountOwner: str
+    latitude: str
+    longitude: str
+    lastOnline = datetime
+    NearbyGeoCoords = str
+    lastCleaned = datetime
+
+class DeviceResponse(BaseModel):
+    deviceID:  str
+    accountOwner: str
+    latitude: str
+    longitude: str
+    lastOnline = datetime
+    NearbyGeoCoords = str
+    lastCleaned = datetime
+
+    class Config:
+        orm_mode = True
+    
+
 
 # Define route to handle POST requests
 @app.post('/upload/')
@@ -75,11 +105,12 @@ async def upload_image(deviceID: str = Form(...),
                       weather: str = "n/a",
                       image: UploadFile = File(...)):
     try:
-        
-        # create unique S3 file name
-        nameElements = [deviceID, device_datetime,'.jpeg']
-        s3filename = '_'.join(nameElements)
-        url = f'https://'+bucketName+'.s3.amazonaws.com/'+s3filename
+        url = f'https://'+bucketName+'.s3.amazonaws.com/'+image.filename
+
+        # Connect to AWS S3
+        s3 = boto3.resource('s3',
+            aws_access_key_id=os.getenv("AWS_ACCESS_ID"),
+            aws_secret_access_key=os.getenv("AWS_ACCESS_KEY"))
 
         # Upload image to S3
         s3.meta.client.upload_fileobj(
@@ -126,7 +157,7 @@ def get_db():
         db.close()
 
 # GET method to retrieve data
-@app.get('/getwaterdata/', response_model=List[ItemResponse])
+@app.get('/getwaterdata/', response_model=List[ImageResponse])
 async def get_data(
     begin_longitude: Optional[float] = None,
     begin_latitude: Optional[float] = None,
@@ -134,38 +165,41 @@ async def get_data(
     end_latitude: Optional[float] = None,
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
+    max_temperature: Optional[float] = None,
     DeviceIDs: Optional[List[str]] = Query(None),
     limit: int = 1000,
     offset: int = 0
 ):
     try:
         db = SessionLocal()
-        query = db.query(Item)
+        query = db.query(ImageRecord)
 
         # Build filters
         filters = []
         if begin_longitude is not None:
-            filters.append(Item.longitude >= begin_longitude)
+            filters.append(ImageRecord.longitude >= begin_longitude)
         if end_longitude is not None:
-            filters.append(Item.longitude <= end_longitude)
+            filters.append(ImageRecord.longitude <= end_longitude)
         if begin_latitude is not None:
-            filters.append(Item.latitude >= begin_latitude)
+            filters.append(ImageRecord.latitude >= begin_latitude)
         if end_latitude is not None:
-            filters.append(Item.latitude <= end_latitude)
+            filters.append(ImageRecord.latitude <= end_latitude)
         if begin_datetime is not None:
-            filters.append(Item.device_datetime >= begin_datetime)
+            filters.append(ImageRecord.device_datetime >= begin_datetime)
         if end_datetime is not None:
-            filters.append(Item.device_datetime <= end_datetime)
+            filters.append(ImageRecord.device_datetime <= end_datetime)
+        if max_temperature is not None:
+            filters.append(ImageRecord.max_temperature <= max_temperature)
         if DeviceIDs:
             valid_ids = [device_id for device_id in DeviceIDs if device_id]
             if valid_ids:
-                filters.append(Item.deviceID.in_(valid_ids))
+                filters.append(ImageRecord.deviceID.in_(valid_ids))
 
         # Apply filters and fetch results
         if filters:
             query = query.filter(and_(*filters))
         
-        query = query.order_by(desc(Item.deviceID), desc(Item.gmt_datetime))
+        query = query.order_by(desc(ImageRecord.deviceID), desc(ImageRecord.gmt_datetime))
 
         if limit > 1000: 
             limit = 1000
@@ -181,8 +215,9 @@ async def get_data(
         raise HTTPException(status_code=500, detail=str(e))
 
 # GET method to retrieve data
-@app.get('/deleteData/', response_model=List[ItemResponse])
+@app.get('/deleteData/')
 async def deleteData(IDtoDelete: int = 0):
+    #return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
     return deleteRowsAndS3Data(IDtoDelete)
 
 def deleteS3Object(s3_url):
@@ -208,12 +243,12 @@ def deleteRowsAndS3Data(IDtoDelete):
     """Delete rows from the Postgres database and their corresponding S3 objects."""
     try:
         db = SessionLocal()
-        query = db.query(Item)
+        query = db.query(ImageRecord)
 
         # Build filters
         filters = []
-        #filters.append(Item.id == IDtoDelete)
-        filters.append(Item.latitude == "999")
+        #filters.append(ImageRecord.id == IDtoDelete)
+        filters.append(ImageRecord.latitude == "999")
         query = query.filter(and_(*filters))
         results = query.all()
 
@@ -250,3 +285,60 @@ def deleteRowsAndS3Data(IDtoDelete):
     except Exception as e:
         return JSONResponse(content={"message": "Failed to delete record", "error": str(e)}, status_code=500)
         
+
+
+
+# GET method to retrieve data
+@app.get('/getwaterdevice/', response_model=List[DeviceResponse])
+async def get_device(
+    DeviceID: Optional[str] = None, 
+    DeviceIDs: Optional[List[str]] = Query(None),
+    begin_longitude: Optional[float] = None,
+    begin_latitude: Optional[float] = None,
+    end_longitude: Optional[float] = None,
+    end_latitude: Optional[float] = None,
+    lastCleaned_datetime: Optional[datetime] = None,
+    limit: int = 1000,
+    offset: int = 0
+):
+    try:
+        db = SessionLocal()
+        query = db.query(DeviceRecord)
+
+        # Build filters
+        filters = []
+        if DeviceID is not None:
+            filters.append(DeviceRecord.deviceID == DeviceID)
+        if DeviceIDs:
+            valid_ids = [device_id for device_id in DeviceIDs if device_id]
+            if valid_ids:
+                filters.append(DeviceRecord.deviceID.in_(valid_ids))
+        if begin_longitude is not None:
+            filters.append(DeviceRecord.longitude >= begin_longitude)
+        if end_longitude is not None:
+            filters.append(DeviceRecord.longitude <= end_longitude)
+        if begin_latitude is not None:
+            filters.append(DeviceRecord.latitude >= begin_latitude)
+        if end_latitude is not None:
+            filters.append(DeviceRecord.latitude <= end_latitude)
+        if lastCleaned_datetime is not None:
+            filters.append(DeviceRecord.lastCleaned <= lastCleaned_datetime)
+
+        # Apply filters and fetch results
+        if filters:
+            query = query.filter(and_(*filters))
+        
+        query = query.order_by(desc(DeviceRecord.deviceID), desc(DeviceRecord.lastOnline))
+
+        if limit > 1000: 
+            limit = 1000
+
+        # Apply limit and offset for paging
+        query = query.offset(offset).limit(limit)
+
+        results = query.all()
+        db.close()
+        return results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
