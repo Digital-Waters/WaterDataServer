@@ -40,8 +40,8 @@ class ImageRecord(Base):
     device_datetime = Column(DateTime, index=True)
     gmt_datetime = Column(DateTime, index=True, nullable=True)
     imageURI  = Column(String)
-    temperature = Column(String, index=True) 
-    waterColor = Column(String)
+    temperature = Column(String, index=True, nullable=True) 
+    waterColor = Column(String, nullable=True)
     weather = Column(String, nullable=True) 
 
 # Define your pydantic model for request body
@@ -175,7 +175,7 @@ async def get_data(
     end_latitude: Optional[float] = None,
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
-    max_temperature: Optional[str] = None,
+    max_temperature: Optional[float] = None,
     DeviceIDs: Optional[List[str]] = Query(None),
     limit: int = 1000,
     offset: int = 0
@@ -199,7 +199,7 @@ async def get_data(
         if end_datetime is not None:
             filters.append(ImageRecord.device_datetime <= end_datetime)
         if max_temperature is not None:
-            filters.append(ImageRecord.temperature <= max_temperature)
+            filters.append(cast(ImageRecord.temperature, Float) <= max_temperature)
 
         if DeviceIDs:
             valid_ids = [device_id for device_id in DeviceIDs if device_id]
