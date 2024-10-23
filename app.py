@@ -228,8 +228,8 @@ async def get_data(
 # GET method to retrieve data
 @app.get('/deleteData/')
 async def deleteData(IDtoDelete: int = 0):
-    return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
-    #return deleteRowsAndS3Data(IDtoDelete)
+    #return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
+    return deleteRowsAndS3Data(IDtoDelete)
 
 def deleteS3Object(s3_url):
     """Delete the corresponding object from S3 based on its URL."""
