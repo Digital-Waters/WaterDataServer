@@ -35,23 +35,23 @@ class ImageRecord(Base):
     __tablename__ = "images"
     id        = Column(Integer, primary_key=True, index=True)
     deviceID  = Column(String, index=True)
-    latitude  = Column(String, index=True)
-    longitude = Column(String, index=True)
+    latitude  = Column(Float, index=True)
+    longitude = Column(Float, index=True)
     device_datetime = Column(DateTime, index=True)
     gmt_datetime = Column(DateTime, index=True, nullable=True)
     imageURI  = Column(String)
-    temperature = Column(String, index=True, nullable=True) 
+    temperature = Column(Float, index=True, nullable=True) 
     waterColor = Column(String, nullable=True)
     weather = Column(String, nullable=True) 
 
 # Define your pydantic model for request body
 class ImageItem(BaseModel):
     deviceID:  str
-    latitude:  str
-    longitude: str
+    latitude:  float
+    longitude: float
     device_datetime:  datetime
     gmt_datetime: datetime
-    temperature: str
+    temperature: float
     waterColor: str
     weather: str
 
@@ -59,12 +59,12 @@ class ImageItem(BaseModel):
 class ImageResponse(BaseModel):
     id: int
     deviceID: str
-    latitude: str
-    longitude: str
+    latitude: float
+    longitude: float
     device_datetime: datetime
     gmt_datetime: datetime
     imageURI: str
-    temperature: str
+    temperature: float
     waterColor: str
     weather: str
 
@@ -76,8 +76,8 @@ class DeviceRecord(Base):
     __tablename__ = "devices"
     deviceID  = Column(String, primary_key=True, index=True)
     accountOwner = Column(String, index=True)
-    latitude  = Column(String, index=True)
-    longitude = Column(String, index=True)
+    latitude  = Column(Float, index=True)
+    longitude = Column(Float, index=True)
     lastOnline = Column(DateTime, index=True, nullable=True)
     nearbyGeoCoords = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
     lastCleaned = Column(DateTime, index=True, nullable=True)
@@ -85,8 +85,8 @@ class DeviceRecord(Base):
 class DeviceItem(BaseModel):
     deviceID: str
     accountOwner: str
-    latitude: str
-    longitude: str
+    latitude: float
+    longitude: float
     lastOnline: datetime
     nearbyGeoCoords: str
     lastCleaned: datetime
@@ -94,8 +94,8 @@ class DeviceItem(BaseModel):
 class DeviceResponse(BaseModel):
     deviceID:  str
     accountOwner: str
-    latitude: str
-    longitude: str
+    latitude: float
+    longitude: float
     lastOnline: datetime
     nearbyGeoCoords: str
     lastCleaned: datetime
@@ -110,10 +110,10 @@ class DeviceResponse(BaseModel):
 @app.post('/upload/')
 #async def upload_image(item: ImageItem, image: UploadFile = File(...)):
 async def upload_image(deviceID: str = Form(...), 
-                      latitude: str = Form(...), 
-                      longitude: str = Form(...), 
+                      latitude: float = Form(...), 
+                      longitude: float = Form(...), 
                       device_datetime: str = Form(...), 
-                      temperature: str = Form(...), 
+                      temperature: float = Form(...), 
                       waterColor: str = Form(...),
                       weather: str = "n/a",
                       image: UploadFile = File(...)):
@@ -199,7 +199,7 @@ async def get_data(
         if end_datetime is not None:
             filters.append(ImageRecord.device_datetime <= end_datetime)
         if max_temperature is not None:
-            filters.append(cast(ImageRecord.temperature, Float) <= max_temperature)
+            filters.append(ImageRecord.temperature <= max_temperature)
 
         if DeviceIDs:
             valid_ids = [device_id for device_id in DeviceIDs if device_id]
@@ -259,7 +259,7 @@ def deleteRowsAndS3Data(IDtoDelete):
         # Build filters
         filters = []
         #filters.append(ImageRecord.id == IDtoDelete)
-        filters.append(ImageRecord.latitude == "999")
+        filters.append(ImageRecord.latitude == 999.0)
         query = query.filter(and_(*filters))
         results = query.all()
 
