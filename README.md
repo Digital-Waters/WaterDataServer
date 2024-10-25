@@ -84,10 +84,12 @@ It can also use optional parameters to filter out the data by time, location, or
 
 **Example calls:**
 Get all records from one of two devices that have a maximum temperature of 12, was created after Oct 2, 2024, limit the results to 25, but the second set of 25 in the results (i.e.: from 26-50):
-`https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?max_temperature=18&begin_datetime=2024-10-02T15:02:21.242-05:00&deviceIDs=0000000077de649d&deviceIDs=000000002133dded&limit=25&offset=25`
+
+https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?max_temperature=18&begin_datetime=2024-10-02T15:02:21.242-05:00&deviceIDs=0000000077de649d&deviceIDs=000000002133dded&limit=25&offset=25
 
 Get the latest 400 results from one device:
-`https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?deviceIDs=000000002133dded&limit=400`
+
+https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?deviceIDs=000000002133dded&limit=400
 
 ## Devices Table
 All our water data comes from devices. Devices are physical things that our people maintain. As we are currently not using GPS with our monitoring devices, we rely on volunteers to determine the precise longitude and latitude of where they place each of their devices. We will use the device location information for all the data that comes from the device.
