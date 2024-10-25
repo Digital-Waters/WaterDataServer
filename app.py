@@ -176,7 +176,7 @@ async def get_data(
     begin_datetime: Optional[datetime] = None,
     end_datetime: Optional[datetime] = None,
     max_temperature: Optional[float] = None,
-    DeviceIDs: Optional[List[str]] = Query(None),
+    deviceIDs: Optional[List[str]] = Query(None),
     limit: int = 1000,
     offset: int = 0
 ):
@@ -201,8 +201,8 @@ async def get_data(
         if max_temperature is not None:
             filters.append(ImageRecord.temperature <= max_temperature)
 
-        if DeviceIDs:
-            valid_ids = [device_id for device_id in DeviceIDs if device_id]
+        if deviceIDs:
+            valid_ids = [device_id for device_id in deviceIDs if device_id]
             if valid_ids:
                 filters.append(ImageRecord.deviceID.in_(valid_ids))
 
@@ -302,8 +302,7 @@ def deleteRowsAndS3Data(IDtoDelete):
 # GET method to retrieve data
 @app.get('/getwaterdevice/', response_model=List[DeviceResponse])
 async def get_device(
-    DeviceID: Optional[str] = None, 
-    DeviceIDs: Optional[List[str]] = Query(None),
+    deviceIDs: Optional[List[str]] = Query(None),
     begin_longitude: Optional[float] = None,
     begin_latitude: Optional[float] = None,
     end_longitude: Optional[float] = None,
@@ -318,10 +317,8 @@ async def get_device(
 
         # Build filters
         filters = []
-        if DeviceID is not None:
-            filters.append(DeviceRecord.deviceID == DeviceID)
-        if DeviceIDs:
-            valid_ids = [device_id for device_id in DeviceIDs if device_id]
+        if deviceIDs:
+            valid_ids = [device_id for device_id in deviceIDs if device_id]
             if valid_ids:
                 filters.append(DeviceRecord.deviceID.in_(valid_ids))
         if begin_longitude is not None:
