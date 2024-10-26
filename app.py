@@ -45,7 +45,7 @@ class ImageRecord(Base):
     weather = Column(String, nullable=True) 
 
 # Define your pydantic model for request body
-class ImageItem(BaseModel):
+class ImageRequest(BaseModel):
     deviceID:  str
     latitude:  float
     longitude: float
@@ -81,8 +81,13 @@ class DeviceRecord(Base):
     lastOnline = Column(DateTime, index=True, nullable=True)
     nearbyGeoCoords = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
     lastCleaned = Column(DateTime, index=True, nullable=True)
+    status = Column(String, index=True),
+    upstreamDeviceID = Column(String),
+    downstreamDeviceID = Column(String),
+    deviceName = Column(String, index=True),
+    description = Column(String)
 
-class DeviceItem(BaseModel):
+class DeviceRequest(BaseModel):
     deviceID: str
     accountOwner: str
     latitude: float
@@ -90,6 +95,11 @@ class DeviceItem(BaseModel):
     lastOnline: datetime
     nearbyGeoCoords: str
     lastCleaned: datetime
+    status = str
+    upstreamDeviceID = str
+    downstreamDeviceID = str
+    deviceName = str
+    description = str
 
 class DeviceResponse(BaseModel):
     deviceID:  str
@@ -99,6 +109,11 @@ class DeviceResponse(BaseModel):
     lastOnline: datetime
     nearbyGeoCoords: str
     lastCleaned: datetime
+    status = str
+    upstreamDeviceID = str
+    downstreamDeviceID = str
+    deviceName = str
+    description = str
 
     class Config:
         orm_mode = True
@@ -108,7 +123,6 @@ class DeviceResponse(BaseModel):
 
 # Define route to handle POST requests
 @app.post('/upload/')
-#async def upload_image(item: ImageItem, image: UploadFile = File(...)):
 async def upload_image(deviceID: str = Form(...), 
                       latitude: float = Form(...), 
                       longitude: float = Form(...), 
@@ -210,7 +224,7 @@ async def get_data(
         if filters:
             query = query.filter(and_(*filters))
         
-        query = query.order_by(desc(ImageRecord.deviceID), desc(ImageRecord.gmt_datetime))
+        query = query.order_by(desc(ImageRecord.deviceID), desc(ImageRecord.device_datetime))
 
         if limit > 1000: 
             limit = 1000
