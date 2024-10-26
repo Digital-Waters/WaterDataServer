@@ -33,16 +33,16 @@ app.add_middleware(
 # Define your database model
 class ImageRecord(Base):
     __tablename__ = "images"
-    id        = Column(Integer, primary_key=True, index=True)
-    deviceID  = Column(String, index=True)
-    latitude  = Column(Float, index=True)
-    longitude = Column(Float, index=True)
+    id              = Column(Integer, primary_key=True, index=True)
+    deviceID        = Column(String, index=True)
+    latitude        = Column(Float, index=True)
+    longitude       = Column(Float, index=True)
     device_datetime = Column(DateTime, index=True)
-    gmt_datetime = Column(DateTime, index=True, nullable=True)
-    imageURI  = Column(String)
-    temperature = Column(Float, index=True, nullable=True) 
-    waterColor = Column(String, nullable=True)
-    weather = Column(String, nullable=True) 
+    gmt_datetime    = Column(DateTime, index=True, nullable=True)
+    imageURI        = Column(String)
+    temperature     = Column(Float, index=True, nullable=True) 
+    waterColor      = Column(String, nullable=True)
+    weather         = Column(String, nullable=True) 
 
 # Define your pydantic model for request body
 class ImageRequest(BaseModel):
@@ -74,18 +74,18 @@ class ImageResponse(BaseModel):
 
 class DeviceRecord(Base):
     __tablename__ = "devices"
-    deviceID  = Column(String, primary_key=True, index=True)
-    accountOwner = Column(String, index=True)
-    latitude  = Column(Float, index=True)
-    longitude = Column(Float, index=True)
-    lastOnline = Column(DateTime, index=True, nullable=True)
-    nearbyGeoCoords = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
-    lastCleaned = Column(DateTime, index=True, nullable=True)
-    status = Column(String, index=True, nullable=True),
-    upstreamDeviceID = Column(String, nullable=True),
-    downstreamDeviceID = Column(String, nullable=True),
-    deviceName = Column(String, nullable=True),
-    description = Column(, nullable=True)
+    deviceID            = Column(String, primary_key=True, index=True)
+    accountOwner        = Column(String, index=True)
+    latitude            = Column(Float, index=True)
+    longitude           = Column(Float, index=True)
+    lastOnline          = Column(DateTime, index=True, nullable=True)
+    nearbyGeoCoords     = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
+    lastCleaned         = Column(DateTime, index=True, nullable=True)
+    status              = Column(String, index=True, nullable=True)
+    upstreamDeviceID    = Column(String, nullable=True)
+    downstreamDeviceID  = Column(String, nullable=True)
+    deviceName          = Column(String, nullable=True)
+    description         = Column(String, nullable=True)
 
 class DeviceRequest(BaseModel):
     deviceID: str
