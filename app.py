@@ -81,11 +81,11 @@ class DeviceRecord(Base):
     lastOnline = Column(DateTime, index=True, nullable=True)
     nearbyGeoCoords = Column(String, index=False, nullable=True)#Column(Geography('LINESTRING'), index=False, nullable=True)
     lastCleaned = Column(DateTime, index=True, nullable=True)
-    status = Column(String, index=True),
-    upstreamDeviceID = Column(String),
-    downstreamDeviceID = Column(String),
-    deviceName = Column(String, index=True),
-    description = Column(String)
+    status = Column(String, index=True, nullable=True),
+    upstreamDeviceID = Column(String, nullable=True),
+    downstreamDeviceID = Column(String, nullable=True),
+    deviceName = Column(String, nullable=True),
+    description = Column(, nullable=True)
 
 class DeviceRequest(BaseModel):
     deviceID: str
