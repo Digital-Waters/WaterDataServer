@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_, desc, asc, select, delete, cast
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import func
 #from geoalchemy2 import Geometry
 from pydantic import BaseModel
 from typing import List, Optional
@@ -191,6 +192,7 @@ async def get_data(
     end_datetime: Optional[datetime] = None,
     max_temperature: Optional[float] = None,
     deviceIDs: Optional[List[str]] = Query(None),
+    only_underwater: Optional[int] = None,
     limit: int = 1000,
     offset: int = 0
 ):
@@ -219,6 +221,10 @@ async def get_data(
             valid_ids = [device_id for device_id in deviceIDs if device_id]
             if valid_ids:
                 filters.append(ImageRecord.deviceID.in_(valid_ids))
+
+        # Add the 30 seconds filter
+        if only_underwater is not None:
+            filters.append(func.extract('epoch', ImageRecord.gmt_datetime - ImageRecord.device_datetime) <= only_underwater)
 
         # Apply filters and fetch results
         if filters:
