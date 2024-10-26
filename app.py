@@ -225,7 +225,7 @@ async def get_data(
         # Add the 30 seconds filter
         if only_underwater is not None:
             # factoring in timezone, get the difference between capture and upload times, if greater than 30 seconds, assume it was captured underwater (no internet connection)
-            filters.append(func.extract('epoch', ImageRecord.gmt_datetime - func.timezone('UTC', ImageRecord.device_datetime)) <= only_underwater)
+            filters.append(func.extract('epoch', ImageRecord.gmt_datetime - func.timezone('EST', ImageRecord.device_datetime)) >= only_underwater)
 
         # Apply filters and fetch results
         if filters:
