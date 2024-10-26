@@ -95,11 +95,11 @@ class DeviceRequest(BaseModel):
     lastOnline: datetime
     nearbyGeoCoords: str
     lastCleaned: datetime
-    status = str
-    upstreamDeviceID = str
-    downstreamDeviceID = str
-    deviceName = str
-    description = str
+    status: str
+    upstreamDeviceID: str
+    downstreamDeviceID: str
+    deviceName: str
+    description: str
 
 class DeviceResponse(BaseModel):
     deviceID:  str
@@ -109,11 +109,11 @@ class DeviceResponse(BaseModel):
     lastOnline: datetime
     nearbyGeoCoords: str
     lastCleaned: datetime
-    status = str
-    upstreamDeviceID = str
-    downstreamDeviceID = str
-    deviceName = str
-    description = str
+    status: str
+    upstreamDeviceID: str
+    downstreamDeviceID: str
+    deviceName: str
+    description: str
 
     class Config:
         orm_mode = True
