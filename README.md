@@ -81,6 +81,12 @@ It can also use optional parameters to filter out the data by time, location, or
     - A list of deviceIDs to pull data from. Any devices that don't have these IDs will be excluded. This is useful for organizations responsible for many devices.
     This is a list of strings.
     Example: `deviceIDs=0000000077de649d&deviceIDs=000000002133dded`
+* `only_underwater`
+    - The time difference, in seconds, between when a photo was captured and when it was uploaded. Any record with a time difference between these two times that is less than this amount will be excluded.
+    
+      The idea is that if a photo was captured and uploaded within a few seconds of each other, the device must be above water and connected to the internet. As we currently don't have a way for our devices to connect to the internet while being underwater, we assume the device must have been above water when the record was captured, making the data not relevant to water and excludable from proper datasets. Suggest using 25 as a default. 
+    This is an integer.
+    Example: `only_underwater=25`
 
 **Example calls:**
 Get all records from one of two devices that have a maximum temperature of 12, was created after Oct 2, 2024, limit the results to 25, but the second set of 25 in the results (i.e.: from 26-50):
