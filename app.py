@@ -67,7 +67,7 @@ class ImageResponse(BaseModel):
     imageURI: str
     temperature: float
     waterColor: str
-    weather: str
+    weather: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -104,17 +104,17 @@ class DeviceRequest(BaseModel):
 
 class DeviceResponse(BaseModel):
     deviceID:  str
-    accountOwner: str
+    accountOwner: Optional[str] = None
     latitude: float
     longitude: float
-    lastOnline: datetime
-    nearbyGeoCoords: str
-    lastCleaned: datetime
-    status: str
-    upstreamDeviceID: str
-    downstreamDeviceID: str
-    deviceName: str
-    description: str
+    lastOnline: Optional[datetime] = None
+    nearbyGeoCoords: Optional[str] = None
+    lastCleaned: Optional[datetime] = None
+    status: Optional[str] = None
+    upstreamDeviceID: Optional[str] = None
+    downstreamDeviceID: Optional[str] = None
+    deviceName: Optional[str] = None
+    description: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -362,9 +362,6 @@ async def get_device(
             query = query.filter(and_(*filters))
         
         query = query.order_by(desc(DeviceRecord.deviceID))
-
-        if limit > 1000: 
-            limit = 1000
 
         # Apply limit and offset for paging
         query = query.offset(offset).limit(limit)
