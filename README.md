@@ -87,11 +87,15 @@ It can also use optional parameters to filter out the data by time, location, or
       The idea is that if a photo was captured and uploaded within a few seconds of each other, the device must be above water and connected to the internet. As we currently don't have a way for our devices to connect to the internet while being underwater, we assume the device must have been above water when the record was captured, making the data not relevant to water and excludable from proper datasets. Suggest using 25 as a default. 
     This is an integer.
     Example: `only_underwater=25`
+* `sort_by`
+    - A means to specify sort. Currently, results are sorted by deviceID then datetime. By passing `deviceDatetime` as an argument here, the results will only be sorted by device datetime (not deviceID). `deviceDatetime` is currently the only option, further sort options can easily be made available.
+    This is a string
+    Example: `sort_by=deviceDatetime`
 
 **Example calls:**
 Get all records from one of two devices that have a maximum temperature of 12, was created after Oct 2, 2024, limit the results to 25, but the second set of 25 in the results (i.e.: from 26-50):
 
-https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?max_temperature=18&begin_datetime=2024-10-02T15:02:21.242-05:00&deviceIDs=0000000077de649d&deviceIDs=000000002133dded&limit=25&offset=25
+https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?max_temperature=18&begin_datetime=2024-10-02T15:02:21.242-05:00&deviceIDs=0000000077de649d&deviceIDs=000000002133dded&limit=25&offset=25&sort_by=deviceDatetime
 
 Get the latest 400 results from one device:
 
