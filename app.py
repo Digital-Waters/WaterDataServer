@@ -193,6 +193,7 @@ async def get_data(
     max_temperature: Optional[float] = None,
     deviceIDs: Optional[List[str]] = Query(None),
     only_underwater: Optional[int] = None,
+    sort_by: Optional[str] = None,
     limit: int = 1000,
     offset: int = 0
 ):
@@ -231,7 +232,10 @@ async def get_data(
         if filters:
             query = query.filter(and_(*filters))
         
-        query = query.order_by(desc(ImageRecord.deviceID), desc(ImageRecord.device_datetime))
+        if sort_by is not None and sort_by == "deviceDatetime": 
+            query = query.order_by(desc(ImageRecord.device_datetime))
+        else:
+            query = query.order_by(desc(ImageRecord.deviceID), desc(ImageRecord.device_datetime))
 
         if limit > 1000: 
             limit = 1000
