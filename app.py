@@ -10,6 +10,9 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from urllib.parse import urlparse
+from celery_worker import process_bulk_upload
+import shutil
+import tempfile
 import boto3
 import os
 
@@ -120,6 +123,15 @@ class DeviceResponse(BaseModel):
         orm_mode = True
     
 
+# Mount the static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Not an API call. Serve html that has our map that shows all the data
+@app.get("/map", response_class=HTMLResponse)
+async def get_map():
+    with open("static/index.html") as f:
+        return f.read()
+
 
 
 # Define route to handle POST requests
@@ -217,7 +229,6 @@ async def get_data(
             filters.append(ImageRecord.device_datetime <= end_datetime)
         if max_temperature is not None:
             filters.append(ImageRecord.temperature <= max_temperature)
-
         if deviceIDs:
             valid_ids = [device_id for device_id in deviceIDs if device_id]
             if valid_ids:
@@ -237,9 +248,6 @@ async def get_data(
         else:
             query = query.order_by(desc(ImageRecord.deviceID), desc(ImageRecord.device_datetime))
 
-        if limit > 1000: 
-            limit = 1000
-
         # Apply limit and offset for paging
         query = query.offset(offset).limit(limit)
 
@@ -253,8 +261,8 @@ async def get_data(
 # GET method to retrieve data
 @app.get('/deleteData/')
 async def deleteData(IDtoDelete: int = 0):
-    #return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
-    return deleteRowsAndS3Data(IDtoDelete)
+    return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
+    #return deleteRowsAndS3Data(IDtoDelete)
 
 def deleteS3Object(s3_url):
     """Delete the corresponding object from S3 based on its URL."""
@@ -372,3 +380,20 @@ async def get_device(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post('/bulkupload/')
+async def upload_bulk_data(file: UploadFile = File(...)):
+    try:
+        # Save the file temporarily
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            shutil.copyfileobj(file.file, tmp_file)
+            tmp_file_path = tmp_file.name
+
+        # Offload the processing to a Celery task
+        process_bulk_upload.delay(tmp_file_path)
+
+        return JSONResponse(content={"message": "Bulk upload processing started"}, status_code=202)
+
+    except Exception as e:
+        return JSONResponse(content={"message": "Bulk upload failed", "error": str(e)}

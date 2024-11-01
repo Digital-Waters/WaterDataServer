@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Color Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    
+    <!-- jQuery and jQuery UI CSS -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    
+    <style>
+        #map {
+            height: 750px;
+            width: 100%;
+        }
+
+        #data-display {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        #slider .ui-slider-range {
+            background: LightBlue; /* Blue slider background */
+        }
+
+        #slider .ui-slider-handle {
+            background: white; /* White scrubber handle */
+            border: 2px solid #ccc;
+            width: 20px; /* Adjust handle size if needed */
+            height: 20px;
+            border-radius: 50%; /* Make the scrubber round */
+            cursor: pointer;
+        }
+
+        #slider {
+            height: 10px; /* Adjust height for visibility */
+            margin-top: 20px;
+            background-color: LightBlue; /*#e0e0e0; /* Light gray background for the slider track */
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        #slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        #next-btn {
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff; /* Light blue button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #next-btn:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+
+        #controls {
+            margin-top: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Map div -->
+    <div id="map"></div>
+
+    <!-- Slider div -->
+    <div id="slider-container">
+        <div id="slider"></div>
+        <button id="next-btn">Next</button>
+    </div>
+    
+    <div id="controls">
+        <input type="checkbox" id="show-details" checked>
+        <label for="show-details">Show Details</label>
+    </div>
+
+    <!-- Include Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+    <!-- jQuery and jQuery UI JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+    <!-- Your custom JavaScript -->
+    <script src="app.js"></script>
+
+</body>
+</html>
