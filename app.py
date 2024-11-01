@@ -396,4 +396,4 @@ async def upload_bulk_data(file: UploadFile = File(...)):
         return JSONResponse(content={"message": "Bulk upload processing started"}, status_code=202)
 
     except Exception as e:
-        return JSONResponse(content={"message": "Bulk upload failed", "error": str(e)}
+        return JSONResponse(content={"message": "Bulk upload failed", "error": str(e)})
