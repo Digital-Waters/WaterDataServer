@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, and_, desc, asc, select, delete, cast
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
