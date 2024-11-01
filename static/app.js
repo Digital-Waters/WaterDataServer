@@ -3,8 +3,7 @@ let polyline; // Variable to store the gradient line
 let offset = 0; // Initial offset
 let jsonData = []; // Array to hold all fetched data
 let markerLayer;
-var map = L.map('map').setView([43.6532, -79.3832], 13);
-//map.attributionControl.setPrefix('');
+var map = L.map('map').setView([43.6909, -79.3905], 13);
 let device1ID, device2ID; // Track fixed IDs for device1 and device2
 let totalRecords = []; // Flattened list of all records across devices
 let showDetails = true; // Track the initial state of tooltips
@@ -173,6 +172,8 @@ document.addEventListener('DOMContentLoaded', function () {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
+    map.attributionControl.setPrefix(''); // Remove Ukranian flag, keep things focused on geo data. 
+
     // Initialize markerLayer here
     markerLayer = L.layerGroup().addTo(map);
 
@@ -247,33 +248,4 @@ function findClosestRecord(targetDatetime, records) {
     }
 
     return closestRecord;
-}
-
-// Function to update the text display for two devices
-function updateTextDisplay(data1, data2) {
-    const waterColor1 = parseWaterColor(data1.waterColor);
-    const waterColor2 = parseWaterColor(data2.waterColor);
-
-    const displayText1 = `
-        <b>Device ID:</b> ${data1.deviceID}<br>
-        <b>Latitude:</b> ${data1.latitude}<br>
-        <b>Longitude:</b> ${data1.longitude}<br>
-        <b>Date:</b> ${data1.device_datetime}<br>
-        <b>Temperature:</b> ${data1.temperature}<br>
-        <b>Water Color:</b> rgba(${waterColor1.r}, ${waterColor1.g}, ${waterColor1.b}, ${waterColor1.a / 100})<br>
-        <b><a href=${data1.imageURI}>${data1.imageURI}</a>
-    `;
-
-    const displayText2 = `
-        <b>Device ID:</b> ${data2.deviceID}<br>
-        <b>Latitude:</b> ${data2.latitude}<br>
-        <b>Longitude:</b> ${data2.longitude}<br>
-        <b>Date:</b> ${data2.device_datetime}<br>
-        <b>Temperature:</b> ${data2.temperature}<br>
-        <b>Water Color:</b> rgba(${waterColor2.r}, ${waterColor2.g}, ${waterColor2.b}, ${waterColor2.a / 100})<br>
-        <b><a href=${data2.imageURI}>${data2.imageURI}</a>
-    `;
-
-    document.getElementById('device-data-1').innerHTML = displayText1;
-    document.getElementById('device-data-2').innerHTML = displayText2;
 }
