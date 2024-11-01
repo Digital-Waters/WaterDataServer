@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from urllib.parse import urlparse
-from celery_worker import process_bulk_upload
 import shutil
 import tempfile
 import boto3
