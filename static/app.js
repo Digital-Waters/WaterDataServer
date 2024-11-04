@@ -178,9 +178,9 @@ function updateMap(timeIndex) {
 }
 
 // Fetch API key from server
-function getWeatherApiKey() {
-    const response = fetch('/getWeatherAPIKey');
-    const data = response.json();
+async function getWeatherApiKey() {
+    const response = await fetch('/getWeatherAPIKey');
+    const data = await response.json();
     if (data.api_key) {
         OPENWEATHER_API_KEY = data.api_key;
     } else {
@@ -308,6 +308,7 @@ async function updatePrecipitationLayer(timeIndex) {
 
 // Fetch current precipitation data from OpenWeatherMap's One Call v3.0 API
 async function fetchCurrentPrecipitation(latitude, longitude) {
+    getWeatherApiKey()
     const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,daily,alerts&appid=${OPENWEATHER_API_KEY}`;
 
     const response = await fetch(url);
