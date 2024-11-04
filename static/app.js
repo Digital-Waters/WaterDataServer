@@ -7,6 +7,8 @@ var map = L.map('map').setView([43.6909, -79.3905], 13);
 let device1ID, device2ID; // Track fixed IDs for device1 and device2
 let totalRecords = []; // Flattened list of all records across devices
 let showDetails = true; // Track the initial state of tooltips
+let showWeatherLayer = false; // Track the state of the weather layer
+window.precipitationLayers = []; // Store layers for toggling
 
 // Function to interpolate colors
 function interpolateColor(color1, color2, factor = 0.5) {
@@ -77,6 +79,17 @@ document.getElementById('show-details').addEventListener('change', function (e) 
     updateMap(currentTimeIndex); // Refresh map to apply tooltip state
 });
 
+// Toggle weather layer based on checkbox
+document.getElementById('show-weather').addEventListener('change', function (e) {
+    showWeatherLayer = e.target.checked;
+
+    if (showWeatherLayer) {
+        window.precipitationLayers.forEach(layer => layer.addTo(map));
+    } else {
+        window.precipitationLayers.forEach(layer => map.removeLayer(layer));
+    }
+});
+
 function updateMap(timeIndex) {
     // Update the global time index for tracking
     currentTimeIndex = timeIndex;
@@ -102,7 +115,7 @@ function updateMap(timeIndex) {
     // Create a marker and tooltip for device1
     const marker1 = L.circleMarker([data1.latitude, data1.longitude], {
         radius: 8,
-        fillColor: `rgba(${waterColor1.r}, ${waterColor1.g}, ${waterColor1.b}, ${waterColor1.a / 100})`,
+        fillColor: `rgba(${waterColor1.r}, ${waterColor1.g}, ${waterColor1.b}, ${waterColor1.a / 10})`,
         color: "#000",
         weight: 1,
         fillOpacity: 0.8
@@ -132,7 +145,7 @@ function updateMap(timeIndex) {
     // Create a marker and tooltip for device2
     const marker2 = L.circleMarker([data2.latitude, data2.longitude], {
         radius: 8,
-        fillColor: `rgba(${waterColor2.r}, ${waterColor2.g}, ${waterColor2.b}, ${waterColor2.a / 100})`,
+        fillColor: `rgba(${waterColor2.r}, ${waterColor2.g}, ${waterColor2.b}, ${waterColor2.a / 10})`,
         color: "#000",
         weight: 1,
         fillOpacity: 0.8
@@ -185,13 +198,20 @@ document.addEventListener('DOMContentLoaded', function () {
         offset += 1000; // Increment offset by 1000 for pagination
         fetchData(offset); // Fetch next set of data
     });
-
+    
+    addPrecipitationLayerForArea(43.69, -79.385); // Example: Toronto coordinates
+    if (showWeatherLayer) {
+        window.precipitationLayers.forEach(layer => layer.addTo(map));
+    } else {
+        window.precipitationLayers.forEach(layer => map.removeLayer(layer));
+    }
+    
     // Initialize and update slider based on total records for all devices
     $("#slider").slider({
         min: 0,
         max: Object.values(jsonData).flat().length - 1,
         step: 1,
-        slide: function (event, ui) {
+        slide: async function (event, ui) {
             updateMap(ui.value); // Update map with new data record index
         }
     });
@@ -248,4 +268,133 @@ function findClosestRecord(targetDatetime, records) {
     }
 
     return closestRecord;
+}
+
+// Function to update precipitation layer based on current timeIndex and location
+async function updatePrecipitationLayer(timeIndex) {
+    const currentRecord = totalRecords[timeIndex];
+    const latitude = currentRecord.latitude;
+    const longitude = currentRecord.longitude;
+    const datetime = currentRecord.device_datetime;
+
+    const precipitation = await fetchPrecipitationData(latitude, longitude, datetime);
+    
+    // Add the precipitation layer based on precipitation data (e.g., using circle marker)
+    const precipitationLayer = L.circleMarker([latitude, longitude], {
+        radius: Math.min(20, precipitation * 2), // Scale radius based on precipitation amount
+        color: "blue",
+        fillOpacity: 0.5,
+        fillColor: "blue"
+    }).addTo(map);
+    
+    // Clear old precipitation layer before adding a new one
+    if (map.hasLayer(precipitationLayer)) {
+        map.removeLayer(precipitationLayer);
+    }
+    map.addLayer(precipitationLayer);
+}
+
+
+// Fetch current precipitation data from OpenWeatherMap's One Call v3.0 API
+async function fetchCurrentPrecipitation(latitude, longitude) {
+    const openWeatherKey = "a5f6041d024e633f212fa1f2c0844400";
+    const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,daily,alerts&appid=${openWeatherKey}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    // Get precipitation data (in mm) if available under current weather
+    const precipitation = data.current?.rain?.['1h'] || 0;
+    return precipitation;
+}
+
+// Function to add a current precipitation layer on the map
+async function addCurrentPrecipitationLayer() {
+    const latitude = 43.6532; // Example location (Toronto latitude)
+    const longitude = -79.3832; // Example location (Toronto longitude)
+
+    // Fetch the current precipitation data
+    const precipitation = await fetchCurrentPrecipitation(latitude, longitude);
+
+    // Clear any previous precipitation layer
+    if (window.currentPrecipitationLayer) {
+        map.removeLayer(window.currentPrecipitationLayer);
+    }
+
+    // Add a new precipitation layer based on the precipitation amount
+    window.currentPrecipitationLayer = L.circleMarker([latitude, longitude], {
+        radius: Math.min(20, precipitation * 2), // Scale radius with precipitation
+        color: "blue",
+        fillOpacity: 0.5,
+        fillColor: "blue"
+    }).addTo(map);
+}
+
+
+
+
+
+// Function to generate nearby points within a 1 km radius around a central location
+function getNearbyPoints(latitude, longitude) {
+    const kmInLatitudeDegrees = 1 / 110.574; // 1 km in degrees latitude
+    const kmInLongitudeDegrees = 1 / (111.32 * Math.cos(latitude * (Math.PI / 180))); // Adjust for longitude
+
+    // Define points around the center in a square pattern, ~1 km apart
+    return [
+        { lat: latitude + kmInLatitudeDegrees, lon: longitude },         // North
+        { lat: latitude - kmInLatitudeDegrees, lon: longitude },         // South
+        { lat: latitude, lon: longitude + kmInLongitudeDegrees },        // East
+        { lat: latitude, lon: longitude - kmInLongitudeDegrees },        // West
+        { lat: latitude + kmInLatitudeDegrees, lon: longitude + kmInLongitudeDegrees },  // NE
+        { lat: latitude + kmInLatitudeDegrees, lon: longitude - kmInLongitudeDegrees },  // NW
+        { lat: latitude - kmInLatitudeDegrees, lon: longitude + kmInLongitudeDegrees },  // SE
+        { lat: latitude - kmInLatitudeDegrees, lon: longitude - kmInLongitudeDegrees }   // SW
+    ];
+}
+
+// Add a precipitation layer for a 1 km radius around a central point
+async function addPrecipitationLayerForArea(latitude, longitude) {
+
+    const points = getNearbyPoints(latitude, longitude);
+    let totalPrecipitation = 0;
+    let validPoints = 0;
+
+    // Clear any previous precipitation markers
+    window.precipitationLayers.forEach(layer => map.removeLayer(layer));
+    window.precipitationLayers = [];
+
+    for (const point of points) {
+        const precipitation = await fetchCurrentPrecipitation(point.lat, point.lon);
+        totalPrecipitation += precipitation;
+        validPoints += 1;
+
+        const color = precipitation > 0 ? "blue" : "gray";
+        const radius = precipitation > 0 ? Math.min(20, precipitation * 2) : 5;
+
+        const layer = L.circleMarker([point.lat, point.lon], {
+            radius: radius,
+            color: color,
+            fillOpacity: 0.5,
+            fillColor: color
+        })
+        .bindTooltip(`${precipitation.toFixed(2)} mm`, { permanent: false }) // Tooltip only on hover/click
+        .addTo(map);
+
+        window.precipitationLayers.push(layer);
+    }
+
+    const averagePrecipitation = totalPrecipitation / validPoints;
+    const averageColor = averagePrecipitation > 0 ? "darkblue" : "gray";
+    const averageRadius = averagePrecipitation > 0 ? Math.min(20, averagePrecipitation * 2) : 5;
+
+    const averageLayer = L.circleMarker([latitude, longitude], {
+        radius: averageRadius,
+        color: averageColor,
+        fillOpacity: 0.7,
+        fillColor: averageColor
+    })
+    .bindTooltip(`Average Precipitation: ${averagePrecipitation.toFixed(2)} mm`, { permanent: false })
+    .addTo(map);
+
+    window.precipitationLayers.push(averageLayer);
 }
