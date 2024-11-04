@@ -179,8 +179,8 @@ function updateMap(timeIndex) {
 
 // Fetch API key from server
 function getWeatherApiKey() {
-    const response = await fetch('/getWeatherAPIKey');
-    const data = await response.json();
+    const response = fetch('/getWeatherAPIKey');
+    const data = response.json();
     if (data.api_key) {
         OPENWEATHER_API_KEY = data.api_key;
     } else {
