@@ -162,7 +162,7 @@ async def upload_image(deviceID: str = Form(...),
             Config = None)
 
         Base.metadata.create_all(engine)
-        
+
         # Save image data to Heroku Postgres database with S3 URI
         db = SessionLocal()
         new_image = ImageRecord(
@@ -397,3 +397,11 @@ async def upload_bulk_data(file: UploadFile = File(...)):
 
     except Exception as e:
         return JSONResponse(content={"message": "Bulk upload failed", "error": str(e)})
+
+@app.get("/getWeatherAPIKey")
+async def get_weather_api_key():
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    if api_key:
+        return {"api_key": api_key}
+    else:
+        return {"error": "API key not found"}, 500

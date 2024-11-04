@@ -2,6 +2,7 @@
 let polyline; // Variable to store the gradient line
 let offset = 0; // Initial offset
 let jsonData = []; // Array to hold all fetched data
+let OPENWEATHER_API_KEY;
 let markerLayer;
 var map = L.map('map').setView([43.6909, -79.3905], 13);
 let device1ID, device2ID; // Track fixed IDs for device1 and device2
@@ -176,6 +177,16 @@ function updateMap(timeIndex) {
     updateLine([data1.latitude, data1.longitude], waterColor1, [data2.latitude, data2.longitude], waterColor2);
 }
 
+// Fetch API key from server
+function getWeatherApiKey() {
+    const response = await fetch('/getWeatherAPIKey');
+    const data = await response.json();
+    if (data.api_key) {
+        OPENWEATHER_API_KEY = data.api_key;
+    } else {
+        console.error('Failed to load weather API key');
+    }
+}
 
 
 // Initialize map and fetch initial data
@@ -205,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         window.precipitationLayers.forEach(layer => map.removeLayer(layer));
     }
-    
+
     // Initialize and update slider based on total records for all devices
     $("#slider").slider({
         min: 0,
@@ -297,8 +308,7 @@ async function updatePrecipitationLayer(timeIndex) {
 
 // Fetch current precipitation data from OpenWeatherMap's One Call v3.0 API
 async function fetchCurrentPrecipitation(latitude, longitude) {
-    const openWeatherKey = "a5f6041d024e633f212fa1f2c0844400";
-    const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,daily,alerts&appid=${openWeatherKey}`;
+    const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,daily,alerts&appid=${OPENWEATHER_API_KEY}`;
 
     const response = await fetch(url);
     const data = await response.json();
@@ -398,3 +408,4 @@ async function addPrecipitationLayerForArea(latitude, longitude) {
 
     window.precipitationLayers.push(averageLayer);
 }
+
