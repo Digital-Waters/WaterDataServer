@@ -133,13 +133,12 @@ async def get_map():
         return f.read()
 
 
-
 # Define route to handle POST requests
 @app.post('/upload/')
 async def upload_image(deviceID: str = Form(...), 
                       latitude: float = Form(...), 
                       longitude: float = Form(...), 
-                      device_datetime: str = Form(...), 
+                      device_datetime: datetime = Form(...), 
                       temperature: float = Form(...), 
                       waterColor: str = Form(...),
                       weather: str = "n/a",
