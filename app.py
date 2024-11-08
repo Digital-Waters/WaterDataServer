@@ -129,7 +129,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/out", StaticFiles(directory="out"), name="out")
 
 # Not an API call. Serve html that has our map that shows all the data
-@app.get("/out", response_class=HTMLResponse)
+@app.get("/datamap", response_class=HTMLResponse)
 async def get_map():
     with open("out/index.html") as f:
         return f.read()
