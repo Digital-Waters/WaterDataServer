@@ -126,13 +126,7 @@ class DeviceResponse(BaseModel):
 
 # Mount the static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/out", StaticFiles(directory="out"), name="out")
-
-# Not an API call. Serve html that has our map that shows all the data
-@app.get("/datamap", response_class=HTMLResponse)
-async def get_map():
-    with open("out/index.html") as f:
-        return f.read()
+app.mount("/out", StaticFiles(directory="out", html=True), name="static")
 
 # Not an API call. Serve html that has our map that shows all the data
 @app.get("/map", response_class=HTMLResponse)
