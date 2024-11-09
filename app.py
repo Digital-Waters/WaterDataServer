@@ -52,8 +52,8 @@ class ImageRecord(Base):
 # Define your pydantic model for request body
 class ImageRequest(BaseModel):
     deviceID:  str
-    latitude:  float
-    longitude: float
+    latitude:  Optional[float] = None
+    longitude: Optional[float] = None
     device_datetime:  datetime
     gmt_datetime: datetime
     temperature: float
@@ -64,8 +64,8 @@ class ImageRequest(BaseModel):
 class ImageResponse(BaseModel):
     id: int
     deviceID: str
-    latitude: float
-    longitude: float
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     device_datetime: datetime
     gmt_datetime: datetime
     imageURI: str
