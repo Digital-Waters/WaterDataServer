@@ -40,8 +40,8 @@ class ImageRecord(Base):
     __tablename__ = "images"
     id              = Column(Integer, primary_key=True, index=True)
     deviceID        = Column(String, index=True)
-    latitude        = Column(Float, index=True)
-    longitude       = Column(Float, index=True)
+    latitude        = Column(Float, index=True, nullable=True)
+    longitude       = Column(Float, index=True, nullable=True)
     device_datetime = Column(DateTime, index=True)
     gmt_datetime    = Column(DateTime, index=True, nullable=True)
     imageURI        = Column(String)
@@ -138,8 +138,8 @@ async def get_map():
 # Define route to handle POST requests
 @app.post('/upload/')
 async def upload_image(deviceID: str = Form(...), 
-                      latitude: float = Form(...), 
-                      longitude: float = Form(...), 
+                      latitude: Optional[float] = Form(...),
+                      longitude: Optional[float] = Form(...),
                       device_datetime: datetime = Form(...), 
                       temperature: float = Form(...), 
                       waterColor: str = Form(...),
