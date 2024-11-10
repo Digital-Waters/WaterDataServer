@@ -259,9 +259,14 @@ async def get_data(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# GET method to remove data from our Postgres DB and associated image from S3
-@app.get('/deleteData/')
-async def deleteData(IDtoDelete: list):
+
+# Define a request body model for validation
+class DeleteRequest(BaseModel):
+    IDsToDelete: List[int]
+
+# POST method to remove data from our Postgres DB and associated image from S3
+@app.post('/deleteData/')
+async def deleteData(request: DeleteRequest):
     #return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
     return deleteRowsAndS3Data(IDtoDelete)
 
@@ -295,7 +300,6 @@ def deleteRowsAndS3Data(IDsToDelete):
 
         # Build filters
         results = query.filter(and_(ImageRecord.id.in_(IDsToDelete))).all()
-        results = query.all()
 
         if not results:
             print("No rows found to delete.")
