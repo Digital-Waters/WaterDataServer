@@ -259,15 +259,15 @@ async def get_data(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# GET method to retrieve data
+# GET method to remove data from our Postgres DB and associated image from S3
 @app.get('/deleteData/')
-async def deleteData(IDtoDelete: int = 0):
-    return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
-    #return deleteRowsAndS3Data(IDtoDelete)
+async def deleteData(IDtoDelete: list):
+    #return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
+    return deleteRowsAndS3Data(IDtoDelete)
 
-def deleteS3Object(s3_url):
+def deleteS3Object(S3URL):
     """Delete the corresponding object from S3 based on its URL."""
-    parsed_url = urlparse(s3_url)
+    parsed_url = urlparse(S3URL)
     object_key = parsed_url.path.lstrip('/')
     
     try:
@@ -284,17 +284,17 @@ def deleteS3Object(s3_url):
         print(f"Error deleting S3 object: {e}")
         return False
 
-def deleteRowsAndS3Data(IDtoDelete):
+def deleteRowsAndS3Data(IDsToDelete):
     """Delete rows from the Postgres database and their corresponding S3 objects."""
     try:
         db = SessionLocal()
         query = db.query(ImageRecord)
 
+        # Limit IDs to the first 50
+        IDsToDelete = IDsToDelete[:60]
+
         # Build filters
-        filters = []
-        #filters.append(ImageRecord.id == IDtoDelete)
-        filters.append(ImageRecord.deviceID == "000000002133dded")
-        query = query.filter(and_(*filters))
+        results = query.filter(and_(ImageRecord.id.in_(IDsToDelete))).all()
         results = query.all()
 
         if not results:
@@ -303,6 +303,7 @@ def deleteRowsAndS3Data(IDtoDelete):
             return
 
         cnt = 0
+
         # Validate, delete S3 objects, and remove rows
         for row in results:
             
@@ -316,8 +317,6 @@ def deleteRowsAndS3Data(IDtoDelete):
             print(f"Deleted row with id: {row.id}")
             print(f"Count: {cnt}")
             cnt = cnt + 1
-            if cnt > 60:
-                break
 
         # Commit the transaction
         db.commit()
@@ -325,10 +324,10 @@ def deleteRowsAndS3Data(IDtoDelete):
     
         db.close()
 
-        return JSONResponse(content={"message": "Record deleted successfully"}, status_code=200)
+        return JSONResponse(content={"message": "{cnt} Records deleted successfully"}, status_code=200)
 
     except Exception as e:
-        return JSONResponse(content={"message": "Failed to delete record", "error": str(e)}, status_code=500)
+        return JSONResponse(content={"message": "Failed to delete records", "error": str(e)}, status_code=500)
         
 
 
@@ -384,7 +383,7 @@ async def get_device(
 
 
 @app.post('/bulkupload/')
-async def upload_bulk_data(file: UploadFile = File(...)):
+async def uploadBulkData(file: UploadFile = File(...)):
     try:
         # Save the file temporarily
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
@@ -400,7 +399,7 @@ async def upload_bulk_data(file: UploadFile = File(...)):
         return JSONResponse(content={"message": "Bulk upload failed", "error": str(e)})
 
 @app.get("/getWeatherAPIKey")
-async def get_weather_api_key():
+async def getWeatherAPIKey():
     api_key = os.getenv("OPENWEATHER_API_KEY")
     if api_key:
         return {"api_key": api_key}
