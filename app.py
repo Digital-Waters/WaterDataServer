@@ -268,7 +268,7 @@ class DeleteRequest(BaseModel):
 @app.post('/deleteData/')
 async def deleteData(request: DeleteRequest):
     #return JSONResponse(content={"message": "Delete Disabled"}, status_code=200)
-    return deleteRowsAndS3Data(IDtoDelete)
+    return deleteRowsAndS3Data(request.IDsToDelete)
 
 def deleteS3Object(S3URL):
     """Delete the corresponding object from S3 based on its URL."""
