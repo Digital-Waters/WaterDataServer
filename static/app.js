@@ -5,28 +5,14 @@ let jsonData = []; // Array to hold all fetched data
 let OPENWEATHER_API_KEY;
 let markerLayer;
 var map = L.map('map').setView([43.6909, -79.3905], 13);
-let device1ID, device2ID; // Track fixed IDs for device1 and device2
 let totalRecords = []; // Flattened list of all records across devices
 let showDetails = true; // Track the initial state of tooltips
 let showWeatherLayer = false; // Track the state of the weather layer
 window.precipitationLayers = []; // Store layers for toggling
 
-// Function to interpolate colors
-function interpolateColor(color1, color2, factor = 0.5) {
-    // Parse the colors
-    const color1RGB = [color1.r, color1.g, color1.b];
-    const color2RGB = [color2.r, color2.g, color2.b];
-
-    // Interpolate each color channel
-    const result = color1RGB.map((channel, index) =>
-        Math.round(channel + factor * (color2RGB[index] - channel))
-    );
-
-    return `rgb(${result[0]}, ${result[1]}, ${result[2]})`;
-}
 
 function fetchData(offset) {
-    const url = `https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?deviceIDs=0000000077de649d&deviceIDs=000000002133dded&only_underwater=25&sort_by=deviceDatetime&offset=${offset}`;
+    const url = `https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?deviceIDs=0000000077de649d&deviceIDs=000000002133dded&deviceIDs=0000000035a0f031&only_underwater=25&sort_by=deviceDatetime&offset=${offset}`;
 
     return fetch(url)
         .then(response => response.json())
@@ -48,13 +34,6 @@ function fetchData(offset) {
 
                 // Flatten jsonData into totalRecords and sort by device_datetime
                 totalRecords = Object.values(jsonData).flat().sort((a, b) => new Date(b.device_datetime) - new Date(a.device_datetime));
-
-                // Identify the two device IDs to maintain fixed roles
-                const deviceIDs = Object.keys(jsonData);
-                if (deviceIDs.length >= 2) {
-                    device1ID = deviceIDs[0];
-                    device2ID = deviceIDs[1];
-                }
 
                 // Update the slider range based on totalRecords length
                 $("#slider").slider("option", "max", totalRecords.length - 1);
@@ -101,81 +80,88 @@ function updateMap(timeIndex) {
         return;
     }
 
-    // Get the most recent record for device1ID
-    const data1 = findClosestRecord(totalRecords[timeIndex].device_datetime, jsonData[device1ID]);
-    // Get the most recent record for device2ID
-    const data2 = findClosestRecord(totalRecords[timeIndex].device_datetime, jsonData[device2ID]);
-
-    // Parse colors for markers
-    const waterColor1 = parseWaterColor(data1.waterColor);
-    const waterColor2 = parseWaterColor(data2.waterColor);
-
     // Clear previous markers and tooltips
     markerLayer.clearLayers();
 
-    // Create a marker and tooltip for device1
-    const marker1 = L.circleMarker([data1.latitude, data1.longitude], {
-        radius: 8,
-        fillColor: `rgba(${waterColor1.r}, ${waterColor1.g}, ${waterColor1.b}, ${waterColor1.a / 10})`,
-        color: "#000",
-        weight: 1,
-        fillOpacity: 0.8
-    }).addTo(markerLayer);
+    // Array to store coordinates for drawing lines
+    const deviceCoordinates = [];
+    const deviceMarkers = [];
 
-    // Add tooltip if showDetails is true
-    if (showDetails) {
-        marker1.bindTooltip(`
-            <b>Device ID:</b> ${data1.deviceID}<br>
-            <b>Latitude:</b> ${data1.latitude}<br>
-            <b>Longitude:</b> ${data1.longitude}<br>
-            <b>Date:</b> ${data1.device_datetime}<br>
-            <b>Temperature:</b> ${data1.temperature}<br>
-            <b>Water Color:</b> rgba(${waterColor1.r}, ${waterColor1.g}, ${waterColor1.b}, ${waterColor1.a})
-        `, {
-            permanent: true,
-            direction: "right",
-            offset: [10, 0]
+    // Iterate over all deviceIDs in jsonData
+    Object.keys(jsonData).forEach((deviceID) => {
+        // Get the most recent record for the current deviceID
+        const data = findClosestRecord(totalRecords[timeIndex].device_datetime, jsonData[deviceID]);
+
+        if (!data) {
+            return;
+        }
+
+        // Parse water color for the marker
+        const waterColor = parseWaterColor(data.waterColor);
+
+        // Add coordinates and water color to the array for drawing lines
+        deviceCoordinates.push({
+            coords: [data.latitude, data.longitude],
+            color: waterColor,
+            order: data.latitude
         });
-    }
 
-    // Open imageURI in new tab on marker1 click
-    marker1.on('click', () => {
-        window.open(data1.imageURI, '_blank');
+        // Prepare the marker data for later rendering
+        deviceMarkers.push({
+            coords: [data.latitude, data.longitude],
+            waterColor: waterColor,
+            data: data
+        });
     });
 
-    // Create a marker and tooltip for device2
-    const marker2 = L.circleMarker([data2.latitude, data2.longitude], {
-        radius: 8,
-        fillColor: `rgba(${waterColor2.r}, ${waterColor2.g}, ${waterColor2.b}, ${waterColor2.a / 10})`,
-        color: "#000",
-        weight: 1,
-        fillOpacity: 0.8
-    }).addTo(markerLayer);
+    deviceCoordinates.sort((a, b) => b.order - a.order);
 
-    // Add tooltip if showDetails is true
-    if (showDetails) {
-        marker2.bindTooltip(`
-            <b>Device ID:</b> ${data2.deviceID}<br>
-            <b>Latitude:</b> ${data2.latitude}<br>
-            <b>Longitude:</b> ${data2.longitude}<br>
-            <b>Date:</b> ${data2.device_datetime}<br>
-            <b>Temperature:</b> ${data2.temperature}<br>
-            <b>Water Color:</b> rgba(${waterColor2.r}, ${waterColor2.g}, ${waterColor2.b}, ${waterColor2.a})
-        `, {
-            permanent: true,
-            direction: "right",
-            offset: [10, 0]
-        });
+    // Draw lines between consecutive device points
+    for (let i = 0; i < deviceCoordinates.length - 1; i++) {
+        updateLine(
+            deviceCoordinates[i].coords,
+            deviceCoordinates[i].color,
+            deviceCoordinates[i + 1].coords,
+            deviceCoordinates[i + 1].color
+        );
     }
 
-    // Open imageURI in new tab on marker2 click
-    marker2.on('click', () => {
-        window.open(data2.imageURI, '_blank');
-    });
+    // Draw markers on top of the lines
+    deviceMarkers.forEach((markerData) => {
+        const { coords, waterColor, data } = markerData;
 
-    // Draw a gradient line between the two device points
-    updateLine([data1.latitude, data1.longitude], waterColor1, [data2.latitude, data2.longitude], waterColor2);
+        // Create a marker for the current device
+        const marker = L.circleMarker(coords, {
+            radius: 8,
+            fillColor: `rgba(${waterColor.r}, ${waterColor.g}, ${waterColor.b}, ${waterColor.a / 10})`,
+            color: "#000",
+            weight: 1,
+            fillOpacity: 0.8
+        }).addTo(markerLayer);
+
+        // Add tooltip if showDetails is true
+        if (showDetails) {
+            marker.bindTooltip(`
+                <b>Device ID:</b> ${data.deviceID}<br>
+                <b>Latitude:</b> ${data.latitude}<br>
+                <b>Longitude:</b> ${data.longitude}<br>
+                <b>Date:</b> ${data.device_datetime}<br>
+                <b>Temperature:</b> ${data.temperature}<br>
+                <b>Water Color:</b> rgba(${waterColor.r}, ${waterColor.g}, ${waterColor.b}, ${waterColor.a})
+            `, {
+                permanent: true,
+                direction: "right",
+                offset: [10, 0]
+            });
+        }
+
+        // Open imageURI in new tab on marker click
+        marker.on('click', () => {
+            window.open(data.imageURI, '_blank');
+        });
+    });
 }
+
 
 // Fetch API key from server
 async function getWeatherApiKey() {
@@ -210,13 +196,14 @@ document.addEventListener('DOMContentLoaded', function () {
         fetchData(offset); // Fetch next set of data
     });
     
+    /*
     addPrecipitationLayerForArea(43.69, -79.385); // Example: Toronto coordinates
     if (showWeatherLayer) {
         window.precipitationLayers.forEach(layer => layer.addTo(map));
     } else {
         window.precipitationLayers.forEach(layer => map.removeLayer(layer));
     }
-
+    */
     // Initialize and update slider based on total records for all devices
     $("#slider").slider({
         min: 0,
@@ -234,17 +221,26 @@ function updateLine(point1, color1, point2, color2) {
     const midpointColor = interpolateColor(color1, color2);
     const lineStyle = {
         color: midpointColor,
-        weight: 4,
-        opacity: 0.8
+        weight: 10,
+        opacity: 0.6
     };
-
-    // If polyline exists, remove it from markerLayer
-    if (polyline) {
-        markerLayer.removeLayer(polyline);
-    }
 
     // Add new polyline to markerLayer (which is already attached to map)
     polyline = L.polyline([point1, point2], lineStyle).addTo(markerLayer);
+}
+
+// Function to interpolate colors
+function interpolateColor(color1, color2, factor = 0.5) {
+    // Parse the colors
+    const color1RGB = [color1.r, color1.g, color1.b];
+    const color2RGB = [color2.r, color2.g, color2.b];
+
+    // Interpolate each color channel
+    const result = color1RGB.map((channel, index) =>
+        Math.round(channel + factor * (color2RGB[index] - channel))
+    );
+
+    return `rgb(${result[0]}, ${result[1]}, ${result[2]})`;
 }
 
 // Function to parse the waterColor field into an object with r, g, b, and a properties
@@ -278,7 +274,12 @@ function findClosestRecord(targetDatetime, records) {
         }
     }
 
-    return closestRecord;
+    // Check if the closest difference is within 1 minute (60,000 ms)
+    if (closestDifference <= 120* 60 * 1000) {
+        return closestRecord;
+    }
+
+    return null;
 }
 
 // Function to update precipitation layer based on current timeIndex and location
