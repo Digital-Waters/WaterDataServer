@@ -328,7 +328,7 @@ def deleteRowsAndS3Data(IDsToDelete):
     
         db.close()
 
-        return JSONResponse(content={"message": "{cnt} Records deleted successfully"}, status_code=200)
+        return JSONResponse(content={"message": "Records deleted successfully"}, status_code=200)
 
     except Exception as e:
         return JSONResponse(content={"message": "Failed to delete records", "error": str(e)}, status_code=500)
