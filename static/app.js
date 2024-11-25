@@ -39,6 +39,7 @@ function fetchData(offset) {
                 $("#slider").slider("option", "max", totalRecords.length - 1);
 
                 updateMap(0); // Initialize with the first data record
+                updateTemperatureChart(0);
 
                 // Show the "Next" button only if 1000 records were returned
                 if (data.length < 1000) {
@@ -51,6 +52,102 @@ function fetchData(offset) {
         .catch(error => console.error('Error fetching data:', error));
 }
 
+
+function updateTemperatureChart() {
+    // Extract unique deviceIDs from the jsonData dictionary
+    const deviceIDs = Object.keys(jsonData);
+
+    // Initialize an array to hold all traces
+    const traces = [];
+
+    // Iterate over each deviceID
+    deviceIDs.forEach(deviceID => {
+        // Extract the array of records for the current deviceID
+        const records = jsonData[deviceID];
+
+        // Filter records with temperature <= 23
+        const filteredRecords = records.filter(record => record.temperature <= 20);
+
+        // Maximum number of points to plot per data series
+        const maxPoints = 100;
+        
+        // Determine the sampling interval
+        const sampleInterval = Math.max(1, Math.floor(filteredRecords.length / maxPoints));
+
+        // Sample the data to reduce the number of points
+        const sampledRecords = filteredRecords.filter((_, index) => index % sampleInterval === 0);
+
+        // Parse the data for this device
+        const x = sampledRecords.map(record => new Date(record.device_datetime)); // x-axis (device time)
+        const y = sampledRecords.map(record => record.temperature); // y-axis (temperature)
+
+        // Skip this device if no valid data points remain after filtering
+        if (x.length === 0 || y.length === 0) return;
+
+        // Define the trace for the current deviceID
+        const trace = {
+            x: x,
+            y: y,
+            mode: 'lines+markers',
+            line: { width: 2 }, // Line width (color will be auto-assigned by Plotly)
+            name: `Device: ${deviceID}`, // Legend entry for the deviceID
+            fill: 'none' // Remove fill if each device needs a distinct line
+        };
+
+        // Add the trace to the traces array
+        traces.push(trace);
+    });
+
+    // Define the initial position of the vertical bar (slider)
+    const initialBarPosition = new Date(); // Current date and time or any desired initial position
+
+    // Define the layout for the chart with the vertical bar
+    const layout = {
+        title: "Temperature Over Time by Device",
+        xaxis: { title: "Time", type: "date", autorange:"reversed" },
+        yaxis: { title: "Temperature (°C)" },
+        showlegend: true,
+        shapes: [
+            {
+                type: 'line',
+                x0: initialBarPosition,
+                x1: initialBarPosition,
+                y0: 0,
+                y1: 1,
+                xref: 'x',
+                yref: 'paper',
+                line: {
+                    color: 'red',
+                    width: 2,
+                    dash: 'dot'
+                }
+            }
+        ]
+    };
+
+    // Plot the chart with all traces
+    Plotly.newPlot("tempChart", traces, layout);
+}
+
+function updateVerticalLine(newPosition) {
+    // Iterate over all deviceIDs in jsonData
+    Object.keys(jsonData).forEach((deviceID) => {
+        // Get the most recent record for the current deviceID
+        const data = findClosestRecord(totalRecords[newPosition].device_datetime, jsonData[deviceID]);
+
+        if (!data) {
+            return;
+        }
+
+
+        Plotly.relayout('tempChart', {
+            'shapes[0].x0': data.device_datetime,
+            'shapes[0].x1': data.device_datetime
+        });
+
+        return;
+    });
+}
 
 
 // Listen for checkbox changes to toggle tooltips
@@ -211,6 +308,7 @@ document.addEventListener('DOMContentLoaded', function () {
         step: 1,
         slide: async function (event, ui) {
             updateMap(ui.value); // Update map with new data record index
+            updateVerticalLine(ui.value);
         }
     });
 });
