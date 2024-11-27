@@ -69,7 +69,7 @@ function updateTemperatureChart() {
         const filteredRecords = records.filter(record => record.temperature <= 20);
 
         // Maximum number of points to plot per data series
-        const maxPoints = 100;
+        const maxPoints = 200;
         
         // Determine the sampling interval
         const sampleInterval = Math.max(1, Math.floor(filteredRecords.length / maxPoints));
@@ -99,11 +99,11 @@ function updateTemperatureChart() {
     });
 
     // Define the initial position of the vertical bar (slider)
-    const initialBarPosition = new Date(); // Current date and time or any desired initial position
+    const initialBarPosition = new Date(totalRecords[0].device_datetime); // Start at first date we have in our data
 
     // Define the layout for the chart with the vertical bar
     const layout = {
-        title: "Temperature Over Time by Device",
+        title: "Water Colour and Temperature Over Time by Device",
         xaxis: { title: "Time", type: "date", autorange:"reversed" },
         yaxis: { title: "Temperature (°C)" },
         showlegend: true,
@@ -127,7 +127,39 @@ function updateTemperatureChart() {
 
     // Plot the chart with all traces
     Plotly.newPlot("tempChart", traces, layout);
+
+    adjustSliderWidth();
 }
+
+function adjustSliderWidth() {
+    const chartContainer = document.getElementById("tempChart");
+
+    // Get the total width of the Plotly control
+    const totalWidth = chartContainer.getBoundingClientRect().width;
+
+    // Get the x-axis offset (left margin) for the plot drawing area
+    const plotArea = chartContainer.querySelector('.plot'); // Plotly drawing area
+    const plotLeftOffset = plotArea.getBoundingClientRect().left;
+
+    // Get the width of the y-axis label
+    const yAxisLabel = chartContainer.querySelector('.ytitle');
+    const yAxisWidth = yAxisLabel ? yAxisLabel.getBoundingClientRect().width : 0;
+
+    // Get the width of the legend
+    const legend = chartContainer.querySelector('.legend');
+    const legendWidth = legend ? legend.getBoundingClientRect().width : 0;
+
+    // Calculate the plot area width
+    const plotWidth = plotArea.getBoundingClientRect().right - plotArea.getBoundingClientRect().left;
+
+    // Apply the width to the slider
+    $("#slider").css({
+        width: `${plotWidth}px`,
+        marginLeft: `${plotLeftOffset}px` // Align slider with the plot area
+    });
+}
+
+
 
 function updateVerticalLine(newPosition) {
     // Iterate over all deviceIDs in jsonData
@@ -138,7 +170,6 @@ function updateVerticalLine(newPosition) {
         if (!data) {
             return;
         }
-
 
         Plotly.relayout('tempChart', {
             'shapes[0].x0': data.device_datetime,
@@ -198,14 +229,14 @@ function updateMap(timeIndex) {
 
         // Add coordinates and water color to the array for drawing lines
         deviceCoordinates.push({
-            coords: [data.latitude, data.longitude],
+            coords: [data.latitude.toFixed(3), data.longitude.toFixed(3)],
             color: waterColor,
             order: data.latitude
         });
 
         // Prepare the marker data for later rendering
         deviceMarkers.push({
-            coords: [data.latitude, data.longitude],
+            coords: [data.latitude.toFixed(3), data.longitude.toFixed(3)],
             waterColor: waterColor,
             data: data
         });
@@ -229,7 +260,7 @@ function updateMap(timeIndex) {
 
         // Create a marker for the current device
         const marker = L.circleMarker(coords, {
-            radius: 8,
+            radius: 15,
             fillColor: `rgba(${waterColor.r}, ${waterColor.g}, ${waterColor.b}, ${waterColor.a / 10})`,
             color: "#000",
             weight: 1,
@@ -287,10 +318,29 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initial fetch of data with offset = 0
     fetchData(offset);
 
-    // "Next" button click event
+    // "More" button click event
     document.getElementById("next-btn").addEventListener("click", () => {
         offset += 1000; // Increment offset by 1000 for pagination
         fetchData(offset); // Fetch next set of data
+    });
+
+    // "Back" button click event
+    document.getElementById("back-btn").addEventListener("click", () => {
+        let sliderValue = $("#slider").slider("value") - 1;
+
+        if (sliderValue >= 0) {
+            updateGUI(sliderValue);
+        }
+    });
+
+    // "Forward" button click event
+    document.getElementById("forward-btn").addEventListener("click", () => {
+        let sliderValue = $("#slider").slider("value") + 1;
+        let maxValue = $("#slider").slider("option", "max");
+
+        if (sliderValue <= maxValue) {
+            updateGUI(sliderValue);
+        }
     });
     
     /*
@@ -313,6 +363,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+
+function updateGUI(sliderValue) {
+    updateMap(sliderValue); // Update map with new data record index
+    updateVerticalLine(sliderValue);
+
+    $("#slider").slider("value", sliderValue);
+}
 
 // Function to create a gradient line between points
 function updateLine(point1, color1, point2, color2) {
