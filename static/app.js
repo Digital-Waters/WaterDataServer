@@ -4,12 +4,23 @@ let offset = 0; // Initial offset
 let jsonData = []; // Array to hold all fetched data
 let OPENWEATHER_API_KEY;
 let markerLayer;
-var map = L.map('map').setView([43.6909, -79.3905], 13);
+var map = L.map('map').setView([43.6866, -79.3852], 15);
 let totalRecords = []; // Flattened list of all records across devices
 let showDetails = true; // Track the initial state of tooltips
 let showWeatherLayer = false; // Track the state of the weather layer
 window.precipitationLayers = []; // Store layers for toggling
 
+const config = {
+    displayModeBar: true, // Show mode bar (set to false to hide it entirely)
+    modeBarButtonsToRemove: [
+        'lasso2d',       // Removes lasso selection tool
+        'select2d',      // Removes box select tool
+        'zoom2d',        // Removes zoom button
+        'autoScale2d'   // Removes autoscale button
+    ],
+    scrollZoom: false,     // Disable zooming with mouse scroll
+    responsive: true       // Keep the graph responsive
+};
 
 function fetchData(offset) {
     const url = `https://water-watch-58265eebffd9.herokuapp.com/getwaterdata/?deviceIDs=0000000077de649d&deviceIDs=000000002133dded&deviceIDs=0000000035a0f031&only_underwater=25&sort_by=deviceDatetime&offset=${offset}`;
@@ -107,6 +118,7 @@ function updateTemperatureChart() {
         xaxis: { title: "Time", type: "date", autorange:"reversed" },
         yaxis: { title: "Temperature (°C)" },
         showlegend: true,
+        dragmode: false,
         shapes: [
             {
                 type: 'line',
@@ -126,9 +138,67 @@ function updateTemperatureChart() {
     };
 
     // Plot the chart with all traces
-    Plotly.newPlot("tempChart", traces, layout);
+    Plotly.newPlot("tempChart", traces, layout, config);
 
     adjustSliderWidth();
+setupMouseEvents();
+    //const chartContainer = document.getElementById("tempChart");
+    
+}
+
+var isDragging;
+var startCoords;
+var endCoords;
+function setupMouseEvents() {
+    
+    startCoords = null;
+    endCoords = null;
+
+    const plotElement = document.getElementById('tempChart');
+
+    // Mouse down event: Start dragging
+    plotElement.addEventListener('mousedown', function(event) {
+        isDragging = true;
+        startCoords = { x: event.offsetX, y: event.offsetY };
+        console.log(`Mouse down at: (${startCoords.x}, ${startCoords.y})`);
+    });
+
+    // Mouse move event: Track dragging
+    document.addEventListener('mousemove', function(event) {
+        if (isDragging) {
+            endCoords = { x: event.offsetX, y: event.offsetY };
+            console.log(`Dragging to: (${endCoords.x}, ${endCoords.y})`);
+        }
+    });
+
+    // Mouse up event: End dragging
+    document.addEventListener('mouseup', function(event) {
+        if (isDragging) {
+            isDragging = false;
+            endCoords = { x: event.offsetX, y: event.offsetY };
+            console.log(`Mouse up at: (${endCoords.x}, ${endCoords.y})`);
+            console.log(`Dragged from (${startCoords.x}, ${startCoords.y}) to (${endCoords.x}, ${endCoords.y})`);
+            //alert(`Dragged from (${startCoords.x}, ${startCoords.y}) to (${endCoords.x}, ${endCoords.y})`);
+        }
+    });
+
+    // Optional: Mouse leave event to handle abrupt exits from the plot area
+    plotElement.addEventListener('mouseleave', function() {
+        if (isDragging) {
+            //isDragging = false;
+            console.log('Mouse left the plot area while dragging.');
+        }
+    });
+    
+    plotElement.on('plotly_click', function(data) {
+        if (data.points.length > 0) {
+            const point = data.points[0];
+            updateMap(0, point.x); // Update map with new data record index
+            updateVerticalLine(0, point.x);
+            //isDragging = false;
+        }
+    });
+    
 }
 
 function adjustSliderWidth() {
@@ -161,11 +231,11 @@ function adjustSliderWidth() {
 
 
 
-function updateVerticalLine(newPosition) {
+function updateVerticalLine(newPosition, targetDate=null) {
     // Iterate over all deviceIDs in jsonData
     Object.keys(jsonData).forEach((deviceID) => {
         // Get the most recent record for the current deviceID
-        const data = findClosestRecord(totalRecords[newPosition].device_datetime, jsonData[deviceID]);
+        const data = findClosestRecord(targetDate ? targetDate :totalRecords[newPosition].device_datetime, jsonData[deviceID]);
 
         if (!data) {
             return;
@@ -198,12 +268,13 @@ document.getElementById('show-weather').addEventListener('change', function (e) 
     }
 });
 
-function updateMap(timeIndex) {
+function updateMap(timeIndex, targetDate=null) {
+
     // Update the global time index for tracking
     currentTimeIndex = timeIndex;
 
     // Ensure timeIndex is within bounds for totalRecords
-    if (timeIndex < 0 || timeIndex >= totalRecords.length) {
+    if (targetDate==null && (timeIndex < 0 || timeIndex >= totalRecords.length)) {
         console.error("Invalid time index.");
         return;
     }
@@ -217,9 +288,10 @@ function updateMap(timeIndex) {
 
     // Iterate over all deviceIDs in jsonData
     Object.keys(jsonData).forEach((deviceID) => {
-        // Get the most recent record for the current deviceID
-        const data = findClosestRecord(totalRecords[timeIndex].device_datetime, jsonData[deviceID]);
 
+        // Get the most recent record for the current deviceID
+        const data = findClosestRecord(targetDate ? targetDate :totalRecords[timeIndex].device_datetime, jsonData[deviceID]);
+        
         if (!data) {
             return;
         }
